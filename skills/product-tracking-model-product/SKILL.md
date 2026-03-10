@@ -84,6 +84,7 @@ Use the inferred view to have a more informed conversation. You're not starting 
 - **Value mapping:** core features (directly deliver value) vs supporting features (enable core). "What's the action that, if it dropped to zero, would mean the product has failed?"
 - **Entity model:** how users/accounts/groups relate, roles, multi-tenancy. "I found models for [entities]. How do they relate?"
 - **Group hierarchy depth:** "How many levels should we track? Most products benefit from 2-3 levels (e.g., Account → Workspace). Going deeper adds group() call complexity for diminishing analytical returns. Where should we draw the line?" Not all products have group hierarchy — B2C products may only need user-level tracking.
+- **Business model:** monetization approach, pricing tiers (check for Stripe/billing code in Gemfile/package.json), free vs paid features. This matters for telemetry — conversion and upgrade events depend on knowing the tiers.
 - **Current state:** existing tracking tools, biggest gaps, pain points
 - **Integration targets:** where telemetry data needs to go (analytics tools, CDPs, data warehouses)
 
@@ -99,7 +100,7 @@ Use the inferred view to have a more informed conversation. You're not starting 
 
 3. **Validate, don't assume.** The codebase gives you hypotheses. The conversation confirms or corrects them.
 
-4. **Product focus, not code focus.** You're building a product model, not a code review. Routes and models tell you what the product does — that's what matters.
+4. **Product focus, not code focus.** You're building a product model, not a code review or database diagram. Routes and models tell you what the product does — that's what matters. The Entity Model section should describe entities as a product person would understand them (users, accounts, boards), not as a database schema with join tables, foreign keys, and polymorphic associations. If your entity model reads like an ER diagram, you've gone too deep.
 
 5. **Ask about value, not features.** "What matters?" is more important than "What exists?" Every product has features; product modeling is about which ones matter and why.
 
@@ -115,6 +116,8 @@ Use the inferred view to have a more informed conversation. You're not starting 
 
 11. **Present decisions, not deliberation.** Reason silently. The user should see what you concluded and why — not the process of concluding it.
 
+12. **Make the one-liner vivid.** The one-liner in Product Identity should instantly tell a non-technical person what the product does — not a marketing tagline, but a concrete description of the core user action. "Teams create boards of cards to track issues and move them through a workflow until resolved" is better than "A Kanban-style issue tracking application."
+
 ## Output Format
 
 Save to `.telemetry/product.md`:
@@ -126,13 +129,20 @@ Save to `.telemetry/product.md`:
 **Method:** codebase scan + conversation
 
 ## Product Identity
-- **One-liner:** [what it does]
+- **One-liner:** [A vivid, plain-English sentence describing what the product does for its users — not a tagline, but something a non-technical person would immediately understand. E.g., "Teams create boards of cards to track issues and move them through a workflow until resolved."]
 - **Category:** [b2b-saas, ai-ml-tool, etc.]
+- **Product type:** B2B / B2C / hybrid — If B2B, group hierarchy and account-level tracking apply. If B2C or hybrid, entity model may only need users.
 - **Collaboration:** single-player / multiplayer / hybrid
+
+## Business Model
+- **Monetization:** [free / freemium / paid-only / open-source with hosted offering]
+- **Pricing tiers:** [list tiers if visible from code, e.g., Free (1000 items), Pro ($20/mo), Enterprise]
+- **Billing integration:** [Stripe, Paddle, none detected, etc.]
 
 ## Tech Stack
 - **Primary language:** [Ruby, Python, TypeScript, Go, etc.]
 - **Framework:** [Rails, Django, Next.js, Express, etc.]
+- **Database:** [PostgreSQL, MySQL, SQLite, MongoDB, etc.]
 - **Background jobs:** [Sidekiq, Celery, Bull, etc. — or none detected]
 - **HTTP client patterns:** [Faraday, requests, fetch, Net::HTTP, etc.]
 - **Module organization:** [Rails concerns, Python packages, TS modules, etc.]
@@ -160,10 +170,6 @@ Save to `.telemetry/product.md`:
 ### Accounts
 - **ID format:** [format]
 - **Hierarchy:** flat / nested
-
-### Product Type
-- **B2B:** yes/no — If yes, group hierarchy and account-level tracking apply
-- **B2C:** If B2C or hybrid, entity model may only need users (no accounts/groups). Note this for downstream tracking design.
 
 ## Group Hierarchy
 

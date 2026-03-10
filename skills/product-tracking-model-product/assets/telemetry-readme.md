@@ -33,4 +33,4 @@ Each phase reads upstream artifacts and produces its own. Phases can be replayed
 ## Source
 
 Product Tracking Skills — by Accoil.
-https://github.com/AccoilHQ/product-tracking-skills
+https://github.com/accoil/product-tracking-skills

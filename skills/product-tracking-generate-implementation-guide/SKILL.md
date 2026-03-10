@@ -4,13 +4,15 @@ description: >
   Translate a tracking plan into an SDK-specific instrumentation guide. Shows how to
   make identify, group, and track calls using the target analytics SDK with real
   template code, architecture guidance, and constraint documentation. Outputs
-  .telemetry/instrument.md. Use when the user has a tracking plan and needs to know
-  how to implement it with a specific SDK like Segment, Amplitude, Mixpanel, PostHog,
-  Accoil, or via generic HTTP POST. Also use when user asks 'create instrumentation
+  .telemetry/instrument.md. Covers 24 analytics destinations across product analytics,
+  CDPs, web analytics, error monitoring, feature flags, and session tools. Use when
+  the user has a tracking plan and needs to know how to implement it with a specific
+  SDK like Segment, Amplitude, Mixpanel, PostHog, Accoil, Google Analytics, Sentry,
+  LaunchDarkly, or via generic HTTP POST. Also use when user asks 'create instrumentation
   guide,' 'how to implement tracking,' 'SDK guide,' or 'generate implementation guide.'
 metadata:
   author: accoil
-  version: "0.5"
+  version: "0.6"
 ---
 
 # Instrument
@@ -21,23 +23,65 @@ This is a **how-to guide**, not a catalog. You don't repeat every event from the
 
 ## References
 
-SDK-specific guides — read the matching one before producing anything:
+Read the matching destination reference before producing anything. References are organized by category.
+
+### Product Analytics & CDPs (full identify → group → track support)
 
 - Segment: [references/segment.md](references/segment.md)
 - Amplitude: [references/amplitude.md](references/amplitude.md)
 - Mixpanel: [references/mixpanel.md](references/mixpanel.md)
 - PostHog: [references/posthog.md](references/posthog.md)
+- RudderStack: [references/rudderstack.md](references/rudderstack.md)
+
+### B2B Engagement Platforms
+
 - Accoil: [references/accoil.md](references/accoil.md)
+- Journy: [references/journy.md](references/journy.md)
+
+### Full-Stack & Web Analytics
+
+- Google Analytics (GA4): [references/google-analytics.md](references/google-analytics.md)
+- Usermaven: [references/usermaven.md](references/usermaven.md)
+- Plausible: [references/plausible.md](references/plausible.md)
+- Fathom: [references/fathom.md](references/fathom.md)
+- Simple Analytics: [references/simple-analytics.md](references/simple-analytics.md)
+- Beam Analytics: [references/beam-analytics.md](references/beam-analytics.md)
+- Microanalytics: [references/microanalytics.md](references/microanalytics.md)
+- Cabin (WithCabin): [references/withcabin.md](references/withcabin.md)
+- Cloudflare Web Analytics: [references/cloudflare-web-analytics.md](references/cloudflare-web-analytics.md)
+
+### Error & Performance Monitoring
+
+- Sentry: [references/sentry.md](references/sentry.md)
+- New Relic: [references/new-relic.md](references/new-relic.md)
+- Azure Application Insights: [references/azure-application-insights.md](references/azure-application-insights.md)
+
+### Feature Flags & Experimentation
+
+- LaunchDarkly: [references/launchdarkly.md](references/launchdarkly.md)
+- Statsig: [references/statsig.md](references/statsig.md)
+
+### Session & Behavior Tools
+
+- HotJar: [references/hotjar.md](references/hotjar.md)
+- UserPilot: [references/userpilot.md](references/userpilot.md)
+
+### Tag Management
+
+- Google Tag Manager: [references/google-tag-manager.md](references/google-tag-manager.md)
+
+### Platform & Architecture
+
 - Forge platform: [references/forge-platform.md](references/forge-platform.md)
 - Generic HTTP architecture: [references/generic-http-architecture.md](references/generic-http-architecture.md)
 
-These cover the most common implementations — Node.js server-side, browser/frontend libraries, and direct API calls. They may not cover every SDK variant or language binding. If the user's environment isn't covered, note what's missing and ask them to provide SDK documentation.
+Not every destination supports the full identify → group → track model. Web analytics tools (Plausible, Fathom, etc.) track page views and simple events only. Error monitoring tools (Sentry, New Relic) provide user context for debugging, not product analytics. Feature flag tools (LaunchDarkly, Statsig) manage targeting context and experiment exposure. Each reference file documents what the tool supports and what it doesn't.
 
-Supporting files:
+### Supporting Files
 
 - Output template: [references/output-template.md](references/output-template.md)
 - Behavioral rules: [references/behavioral-rules.md](references/behavioral-rules.md)
-- Generic HTTP architecture: [references/generic-http-architecture.md](references/generic-http-architecture.md)
+- Destination reference template: [references/destination-reference-template.md](references/destination-reference-template.md) — follow this when adding new destinations
 
 ## Goal
 

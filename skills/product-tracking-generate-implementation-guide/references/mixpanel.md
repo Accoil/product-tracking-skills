@@ -1,3 +1,4 @@
+<!-- Last verified: 2026-03-10 against Mixpanel docs -->
 # Mixpanel Implementation Guide
 
 ## Overview
@@ -180,3 +181,17 @@ mixpanel.groups.set('company_id', 'acc_456', {
 2. **Forgetting reset on logout** -- Old user context persists for the next user
 3. **Assuming group hierarchy exists** -- Mixpanel has no parent-child rollup between group types
 4. **Not registering Group Keys** -- Group keys must be created in project settings before data is sent
+5. **Using `people.track_charge()`** -- Deprecated as of May 2025; the method is a no-op and only prints a console error
+
+## Further Documentation
+
+This reference covers the essentials for product tracking implementation. For advanced topics, consult Mixpanel's official documentation:
+
+- **Getting Started:** https://docs.mixpanel.com/docs/quickstart/install-mixpanel
+- **JavaScript SDK:** https://docs.mixpanel.com/docs/tracking-methods/sdks/javascript
+- **Node.js SDK:** https://docs.mixpanel.com/docs/tracking-methods/sdks/nodejs
+- **Identifying Users:** https://docs.mixpanel.com/docs/tracking-methods/id-management/identifying-users-simplified
+- **Group Analytics:** https://docs.mixpanel.com/docs/data-structure/group-analytics
+- **User Profiles:** https://docs.mixpanel.com/docs/data-structure/user-profiles
+- **HTTP API:** https://docs.mixpanel.com/docs/tracking/http-api
+- **Data Governance:** https://docs.mixpanel.com/docs/data-governance

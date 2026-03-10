@@ -1,3 +1,4 @@
+<!-- Last verified: 2026-03-10 against Segment docs -->
 # Segment Implementation Reference
 
 Segment is a customer data platform (CDP) that routes events to multiple destinations. Three integration paths depending on environment:
@@ -40,8 +41,27 @@ Server-side calls require explicit `userId` on every call — there is no implic
 
 Use when you cannot install an SDK (Forge backend, edge functions, serverless without npm). Base URLs:
 
-- Default: `https://api.segment.io/v1/`
-- EU: `https://events.eu1.segmentapis.com/v1/`
+- Default (Oregon): `https://api.segment.io/v1/`
+- EU (Dublin): `https://events.eu1.segmentapis.com/v1/`
+
+### Regional Endpoints
+
+Since April 2025, Segment enforces regional data routing. EU workspaces **MUST** use the EU endpoints — data sent to the wrong region is silently rejected (the API returns `200` but the data is dropped).
+
+| Integration | Default (Oregon) | EU (Dublin) |
+|---|---|---|
+| HTTP API | `https://api.segment.io/v1/` | `https://events.eu1.segmentapis.com/v1/` |
+| Node.js SDK (`host`) | _(default, no config needed)_ | `https://eu1.api.segmentapis.com` |
+
+**Node.js EU configuration:**
+```javascript
+const analytics = new Analytics({
+  writeKey: process.env.SEGMENT_WRITE_KEY,
+  host: 'https://eu1.api.segmentapis.com'
+});
+```
+
+**Warning:** There is no error signal when data is sent to the wrong region. Verify your workspace region in Segment Settings → Workspace before configuring endpoints.
 
 ### Authentication
 
@@ -287,6 +307,7 @@ Omit `timestamp` to use server time (preferred for live events). Only set it exp
 | Rate limit | 1,000 requests/sec per workspace |
 | Max single event | 32 KB |
 | Max batch request | 500 KB (with each event still under 32 KB) |
+| Max events per batch | 2,500 (excess events are silently dropped — API returns 200) |
 | `messageId` | Auto-generated for dedup; if setting manually, keep under 100 chars |
 
 ## Typical Call Sequence
