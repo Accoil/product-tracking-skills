@@ -1,13 +1,13 @@
 {
   "name": "product-tracking-skills",
-  "version": "0.6.5",
-  "description": "AI agent skills that make B2B SaaS products data-ready for product analytics — from codebase scan to tracking plan to working instrumentation code.",
+  "version": "1.0.2",
+  "description": "AI agent skills that make SaaS products data-ready for product analytics — from codebase scan to tracking plan to working instrumentation code.",
   "author": {
     "name": "Accoil",
     "email": "hello@accoil.com"
   },
-  "homepage": "https://github.com/accoilhq/product-tracking-skills",
-  "repository": "https://github.com/accoilhq/product-tracking-skills",
+  "homepage": "https://github.com/accoil/product-tracking-skills",
+  "repository": "https://github.com/accoil/product-tracking-skills",
   "license": "MIT",
   "keywords": [
     "product-tracking",
@@ -22,6 +22,20 @@
     "posthog",
     "accoil",
     "rudderstack",
+    "google-analytics",
+    "sentry",
+    "launchdarkly",
+    "statsig",
+    "hotjar",
+    "plausible",
+    "fathom",
+    "usermaven",
+    "journy",
+    "new-relic",
+    "azure-application-insights",
+    "cloudflare-analytics",
+    "userpilot",
+    "google-tag-manager",
     "data-ready"
   ]
 }

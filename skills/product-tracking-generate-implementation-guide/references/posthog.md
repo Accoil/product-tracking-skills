@@ -1,3 +1,4 @@
+<!-- Last verified: 2026-03-10 against PostHog docs -->
 # PostHog Implementation Guide
 
 ## Overview
@@ -23,8 +24,9 @@ npm install posthog-node
 import posthog from 'posthog-js';
 
 posthog.init('YOUR_API_KEY', {
-  api_host: 'https://app.posthog.com',  // or your self-hosted URL
-  
+  api_host: 'https://us.i.posthog.com',  // EU Cloud: 'https://eu.i.posthog.com'
+  defaults: '2026-01-30',  // Sets baseline behavior versions (enables modern defaults like SPA pageview tracking)
+
   // Tracking options
   autocapture: true,           // Auto-track clicks, inputs, etc.
   capture_pageview: true,      // Auto-track page views
@@ -48,7 +50,7 @@ posthog.init('YOUR_API_KEY', {
 import { PostHog } from 'posthog-node';
 
 const posthog = new PostHog('YOUR_API_KEY', {
-  host: 'https://app.posthog.com',  // or your self-hosted URL
+  host: 'https://us.i.posthog.com',  // EU Cloud: 'https://eu.i.posthog.com'
   flushAt: 20,        // Batch size
   flushInterval: 10000  // Flush every 10s
 });
@@ -120,7 +122,12 @@ posthog.setPersonPropertiesForFlags({
 
 ## Groups (B2B / Account Analytics)
 
-Groups enable account-level analysis for B2B.
+Groups enable account-level analysis for B2B. **Note:** Group analytics is a paid add-on in PostHog.
+
+**Key requirements:**
+- Events must be **identified** to link to groups. If `$process_person_profile` is `false`, events won't link to the group.
+- Individual groups require **at least one property** to appear in the PostHog People tab.
+- The `name` property is special — PostHog uses it to display the group in the UI. If not set, it falls back to the group key.
 
 ### Associate User with Group
 ```typescript
@@ -144,14 +151,21 @@ posthog.groupIdentify({
 ```
 
 ### Track Event with Group Context
+
+**Browser:** The JS SDK is stateful. After calling `group()`, all subsequent `capture()` calls automatically include that group — no need to pass it again.
+
 ```typescript
 // Browser (automatically includes group after group() call)
 posthog.capture('Feature Used', {
   feature: 'export'
   // Automatically includes company: acc_456
 });
+```
 
-// Node.js (explicit groups)
+**Node.js:** Backend SDKs are stateless. You must pass `groups` explicitly on every `capture()` call.
+
+```typescript
+// Node.js (explicit groups required)
 posthog.capture({
   distinctId: 'usr_123',
   event: 'Feature Used',
@@ -258,7 +272,10 @@ posthog.capture({
 });
 ```
 
-**Important:** PostHog supports up to 5 group types. It does not natively support hierarchical rollups — use `parent_group_id` as a group property for downstream hierarchy reconstruction.
+**Important:**
+- PostHog supports up to 5 group types per project.
+- Multiple groups of the same type cannot be assigned to a single event.
+- PostHog does not natively support hierarchical rollups — use `parent_group_id` as a group property for downstream hierarchy reconstruction.
 
 ## Feature Flags
 
@@ -370,9 +387,12 @@ posthog.group('company', user.accountId, {
 
 ### 2. Reset on Logout
 ```typescript
-posthog.reset();  // Clears identity
+posthog.reset();  // Clears identity and group associations
 // or
 posthog.reset(true);  // Also resets device ID
+
+// To reset only groups (keep user identity):
+posthog.resetGroups();
 ```
 
 ### 3. Use $set and $set_once Inline
@@ -387,10 +407,13 @@ posthog.capture('Plan Upgraded', {
 
 ### 4. Alias for Merging Identities
 ```typescript
-// When anonymous user signs up
-posthog.alias('usr_123', posthog.get_distinct_id());
+// When anonymous user signs up — link the new user ID to the anonymous ID
+// alias(aliasId, distinctId) — aliasId becomes an alias for distinctId
+posthog.alias('usr_123');  // Links 'usr_123' to current anonymous distinct ID
 posthog.identify('usr_123');
 ```
+
+**Note:** Alias is rarely needed. `identify()` automatically links anonymous and identified users in most cases. Use alias only when you need to merge two known distinct IDs (e.g., frontend ID to backend ID).
 
 ### 5. Shutdown Gracefully (Node.js)
 ```typescript
@@ -453,7 +476,7 @@ posthog.init('your-project-key', {
 
 ```typescript
 posthog.init('your-project-key', {
-  api_host: 'https://eu.posthog.com'
+  api_host: 'https://eu.i.posthog.com'
 });
 ```
 
@@ -467,3 +490,19 @@ posthog.init('your-project-key', {
 | Feature Flags | ✓ Built-in | ✓ (Experiment) | ✗ |
 | A/B Testing | ✓ Built-in | ✓ | ✗ |
 | Autocapture | ✓ | ✓ | ✓ |
+
+## Further Documentation
+
+This reference covers the essentials for product tracking implementation. For advanced topics, consult PostHog's official documentation:
+
+- **Getting Started:** https://posthog.com/docs/getting-started/install
+- **JavaScript SDK:** https://posthog.com/docs/libraries/js
+- **Node.js SDK:** https://posthog.com/docs/libraries/node
+- **Identify & User Properties:** https://posthog.com/docs/product-analytics/identify
+- **Group Analytics (B2B):** https://posthog.com/docs/product-analytics/group-analytics
+- **Session Replay:** https://posthog.com/docs/session-replay
+- **Feature Flags:** https://posthog.com/docs/feature-flags
+- **A/B Testing (Experiments):** https://posthog.com/docs/experiments
+- **Autocapture:** https://posthog.com/docs/product-analytics/autocapture
+- **API Reference:** https://posthog.com/docs/api
+- **Self-Hosting:** https://posthog.com/docs/self-host

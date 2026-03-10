@@ -1,3 +1,4 @@
+<!-- Last verified: 2026-03-10 against Amplitude docs -->
 # Amplitude Implementation Guide
 
 ## Overview
@@ -27,12 +28,17 @@ npm install @amplitude/analytics-browser
 ```typescript
 import * as amplitude from '@amplitude/analytics-browser';
 
+// Note: `defaultTracking` was deprecated in Browser SDK v2.10.0; use `autocapture` instead.
 amplitude.init(process.env.AMPLITUDE_API_KEY!, {
-  defaultTracking: {
-    sessions: true,        // Track session start/end
-    pageViews: true,       // Track page views automatically
-    formInteractions: true, // Track form starts/submits
-    fileDownloads: true,   // Track file downloads
+  autocapture: {
+    attribution: true,          // Track marketing attribution
+    pageViews: true,            // Track page views automatically
+    sessions: true,             // Track session start/end
+    formInteractions: true,     // Track form starts/submits
+    fileDownloads: true,        // Track file downloads
+    elementInteractions: false, // Track element clicks/interactions
+    pageUrlEnrichment: true,    // Enrich events with page URL (useful for SPAs)
+    webVitals: false,           // Track Core Web Vitals
   },
 });
 ```
@@ -255,15 +261,14 @@ Track billing events server-side for accuracy:
 
 ```typescript
 // Server-side
-import { Amplitude } from '@amplitude/analytics-node';
+import { init, track } from '@amplitude/analytics-node';
 
-const amplitude = new Amplitude(process.env.AMPLITUDE_API_KEY!);
+init(process.env.AMPLITUDE_API_KEY!);
 
-amplitude.track('plan.upgraded', {
-  user_id: 'usr_123',
+track('plan.upgraded', {
   from_plan: 'free',
   to_plan: 'pro'
-});
+}, { user_id: 'usr_123' });
 ```
 
 ## Debugging
@@ -289,3 +294,16 @@ In Amplitude UI, search by user ID to see their event stream.
 | `group(groupId, traits)` | `setGroup(type, id)` + `groupIdentify(...)` |
 | `track(event, props)` | `track(event, props)` |
 | Routes to destinations | Direct to Amplitude |
+
+## Further Documentation
+
+This reference covers the essentials for product tracking implementation. For advanced topics, consult Amplitude's official documentation:
+
+- **Getting Started:** https://amplitude.com/docs/getting-started
+- **Browser SDK:** https://amplitude.com/docs/sdks/analytics/browser/browser-sdk-2
+- **Node.js SDK:** https://amplitude.com/docs/sdks/analytics/node/node-js-sdk
+- **Identify API:** https://amplitude.com/docs/apis/analytics/identify
+- **Group Analytics:** https://amplitude.com/docs/sdks/analytics/browser/browser-sdk-2#user-groups
+- **Revenue Tracking:** https://amplitude.com/docs/sdks/analytics/browser/browser-sdk-2#revenue-tracking
+- **Amplitude Experiment (A/B Testing):** https://amplitude.com/docs/feature-experiment/overview
+- **HTTP API:** https://amplitude.com/docs/apis/analytics/http-v2

@@ -9,7 +9,7 @@ The problem isn't your analytics tool. It's your instrumentation.
 Product Tracking Skills is a set of open-source AI agent skills that scan your codebase, design an opinionated tracking plan, and generate real instrumentation code — for any analytics SDK, in any AI agent tool.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/accoilhq/product-tracking-skills)](https://github.com/accoilhq/product-tracking-skills)
+[![GitHub stars](https://img.shields.io/github/stars/accoil/product-tracking-skills)](https://github.com/accoil/product-tracking-skills)
 
 **Works in:** Claude Code &middot; Codex &middot; VS Code &middot; any tool with AI agent support
 
@@ -77,7 +77,7 @@ These aren't thin prompts. Each skill includes a built-in reference library:
 - **Naming conventions** — dot.notation for event names (`report.created`), snake_case for properties and traits (`signup_source`)
 - **B2B entity modeling** — two-entity model, group hierarchies, instance vs user-level tracking
 - **7 category templates** — opinionated starting points for B2B SaaS, AI/ML, dev tools, and more
-- **SDK guides** for 6 analytics platforms — correct identify, group, and track call patterns for each (and more coming)
+- **Instrumentation references for 24 analytics destinations** — product analytics, CDPs, web analytics, error monitoring, feature flags, and session tools
 
 The skills encode the kind of knowledge that usually lives in a senior analytics engineer's head — except it doesn't walk out the door when they leave.
 
@@ -115,9 +115,11 @@ If you're a B2B SaaS team and you can't answer *"which features does account X a
 
 ---
 
-## Supported Analytics SDKs
+## Supported Analytics Destinations
 
-Code generation is SDK-specific. Not generic wrappers — real call patterns, identity management, and group handling for each platform. More will be added over time.
+Instrumentation references for 24 destinations across 7 categories. Each reference documents real SDK call patterns, authentication, constraints, and common pitfalls.
+
+### Product Analytics & CDPs (full identify → group → track)
 
 | Platform | Browser | Node.js |
 |----------|---------|---------|
@@ -127,6 +129,22 @@ Code generation is SDK-specific. Not generic wrappers — real call patterns, id
 | **PostHog** | `posthog-js` | `posthog-node` |
 | **Accoil** | `tracker.js` (CDN) | Direct API |
 | **RudderStack** | `rudder-sdk-js` | `@rudderstack/rudder-sdk-node` |
+| **Usermaven** | `usermaven-js` | HTTP API |
+| **Journy** | — | `@journyio/sdk` |
+
+### Also Supported
+
+| Category | Destinations |
+|----------|-------------|
+| **Web Analytics** | Google Analytics (GA4), Plausible, Fathom, Simple Analytics, Beam, Microanalytics, Cabin, Cloudflare |
+| **Error & Performance** | Sentry, New Relic, Azure Application Insights |
+| **Feature Flags** | LaunchDarkly, Statsig |
+| **Session & Behavior** | HotJar, UserPilot |
+| **Tag Management** | Google Tag Manager |
+
+Not every destination supports the full B2B analytics model. Web analytics tools track page views and simple events. Error monitoring provides user context for debugging. Feature flag tools manage targeting and experiment exposure. Each reference documents what the tool supports, what it doesn't, and when to use it alongside a full product analytics platform.
+
+Want to add a destination? See the [destination reference template](skills/product-tracking-generate-implementation-guide/references/destination-reference-template.md).
 
 ---
 
@@ -203,13 +221,13 @@ Use `npx skills` to install skills directly:
 
 ```bash
 # Install all skills
-npx skills add accoilhq/product-tracking-skills
+npx skills add accoil/product-tracking-skills
 
 # Install specific skills
-npx skills add accoilhq/product-tracking-skills --skill audit design
+npx skills add accoil/product-tracking-skills --skill audit design
 
 # List available skills
-npx skills add accoilhq/product-tracking-skills --list
+npx skills add accoil/product-tracking-skills --list
 ```
 
 This automatically installs to your `.claude/skills/` directory.
@@ -220,7 +238,7 @@ Install via Claude Code's built-in plugin system:
 
 ```bash
 # Add the marketplace
-/plugin marketplace add accoilhq/product-tracking-skills
+/plugin marketplace add accoil/product-tracking-skills
 
 # Install all skills
 /plugin install product-tracking-skills
@@ -231,7 +249,7 @@ Install via Claude Code's built-in plugin system:
 Clone the repo and copy the skills folder:
 
 ```bash
-git clone https://github.com/accoilhq/product-tracking-skills.git
+git clone https://github.com/accoil/product-tracking-skills.git
 cp -r product-tracking-skills/skills/* .claude/skills/
 ```
 
@@ -252,7 +270,7 @@ This runs the full skill chain — model, audit, design — and produces a track
 
 ## Feedback
 
-Found a bug? Have a suggestion? [Open an issue](https://github.com/accoilhq/product-tracking-skills/issues).
+Found a bug? Have a suggestion? [Open an issue](https://github.com/accoil/product-tracking-skills/issues).
 
 ---
 
