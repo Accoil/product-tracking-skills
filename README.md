@@ -1,12 +1,10 @@
 # Product Tracking Skills
 
-**Your product isn't data-ready. These skills fix that.**
+**Your analytics tool isn't the problem. Your product tracking is.**
 
-You're paying for Amplitude, Mixpanel, or PostHog — but you can't answer three basic questions: Which features do your customers actually use? Where do users drop off? Which accounts are at risk?
+Most SaaS products have inconsistent events, missing context, and no real tracking plan. You're paying for Amplitude, Mixpanel, or PostHog — they work fine. You still can't answer basic questions because the instrumentation feeding them is broken.
 
-The problem isn't your analytics tool. It's your instrumentation.
-
-Product Tracking Skills is a set of open-source AI agent skills that scan your codebase, design an opinionated tracking plan, and generate real instrumentation code — for any analytics SDK, in any AI agent tool.
+Product Tracking Skills scans your codebase, audits what's tracked, and generates the instrumentation needed to make your analytics tools actually work — for 24+ platforms, in any AI agent tool.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/accoil/product-tracking-skills)](https://github.com/accoil/product-tracking-skills)
@@ -33,7 +31,7 @@ AI:  [Generates typed wrapper functions, delivery infrastructure, event constant
      Tracking code ready in tracking/
 ```
 
-Seven skills. One session. Data-ready.
+Seven skills. One session. Your analytics tools finally work.
 
 ---
 
@@ -47,13 +45,13 @@ Most B2B products have one of these situations:
 
 **Decayed tracking.** Someone set it up 18 months ago. Twelve features have shipped since. None were instrumented. The tracking plan — if one exists — is a lie.
 
-In all three cases, your CS team can't see which accounts are healthy. Your product team can't measure feature adoption. You can't give investors real usage numbers. And the analytics tool you're paying for? It works fine. It's just being fed garbage.
+In all three cases, your CS team can't see which accounts are healthy. Your product team can't measure feature adoption. You can't give investors real usage numbers. The analytics tool you're paying for works fine — it just can't help when the tracking feeding it is missing, inconsistent, or broken.
 
 ---
 
 ## What These Skills Do
 
-They make your product **data-ready** — properly instrumented so any analytics tool downstream can answer real questions about how customers use your product.
+They fix the instrumentation layer feeding your analytics tools — so your product is properly tracked and any analytics tool downstream can answer real questions about how customers use your product.
 
 The focus is **users, accounts, features, and lifecycle events**. The raw signals your product emits. Not vanity pageviews. Not generic clicks. Semantic events with meaning, properties, and account attribution.
 
@@ -109,17 +107,20 @@ Business Case ──▶ Model ──▶ Audit ──▶ Design ──▶ Instrum
 
 **Product engineers** who inherited tracking that's scattered, inconsistent, and undocumented. You get a structured system: audit what exists, design what should exist, generate typed code to close the gap.
 
+**Platform engineers** wiring up multiple tools — analytics, error monitoring, feature flags, session replay — who want consistent identity and event naming across all of them instead of six different instrumentation patterns scattered across the codebase.
+
 **CS and product teams** who need feature adoption data and account health signals. You can't run the skills yourself, but you can hand engineering a clear process: "Run these skills. Get us the data we need."
 
-If you're a B2B SaaS team and you can't answer *"which features does account X actually use?"* — start here.
+If you're a B2B SaaS team and you can't answer *"which features does account X actually use?"* — or your Sentry errors have no user context, or your LaunchDarkly targeting is based on guesswork — start here.
 
 ---
 
-## Supported Analytics Destinations
+## Supported Destinations
 
-Instrumentation references for 24 destinations across 7 categories. Each reference documents real SDK call patterns, authentication, constraints, and common pitfalls.
+Instrumentation references for 24+ destinations across 7 categories. Each reference documents real SDK call patterns, authentication, constraints, and common pitfalls.
 
-### Product Analytics & CDPs (full identify → group → track)
+### Product Analytics & CDPs
+Full identify → group → track lifecycle. Primary destinations for product usage data.
 
 | Platform | Browser | Node.js |
 |----------|---------|---------|
@@ -127,22 +128,61 @@ Instrumentation references for 24 destinations across 7 categories. Each referen
 | **Amplitude** | `@amplitude/analytics-browser` | `@amplitude/analytics-node` |
 | **Mixpanel** | `mixpanel-browser` | `mixpanel` |
 | **PostHog** | `posthog-js` | `posthog-node` |
-| **Accoil** | `tracker.js` (CDN) | Direct API |
 | **RudderStack** | `rudder-sdk-js` | `@rudderstack/rudder-sdk-node` |
-| **Usermaven** | `usermaven-js` | HTTP API |
+
+### B2B Engagement Platforms
+Account-level engagement scoring and lifecycle signals.
+
+| Platform | Browser | Server |
+|----------|---------|--------|
+| **Accoil** | `tracker.js` (CDN) | Direct API |
 | **Journy** | — | `@journyio/sdk` |
 
-### Also Supported
+### Web Analytics
+Page-level and event tracking.
 
-| Category | Destinations |
+| Platform | Integration |
 |----------|-------------|
-| **Web Analytics** | Google Analytics (GA4), Plausible, Fathom, Simple Analytics, Beam, Microanalytics, Cabin, Cloudflare |
-| **Error & Performance** | Sentry, New Relic, Azure Application Insights |
-| **Feature Flags** | LaunchDarkly, Statsig |
-| **Session & Behavior** | HotJar, UserPilot |
-| **Tag Management** | Google Tag Manager |
+| **Google Analytics (GA4)** | `gtag.js` / GTM |
+| **Plausible** | Script tag / Events API |
+| **Fathom** | Script tag / Events API |
+| **Simple Analytics** | Script tag / Events API |
+| **Usermaven** | `usermaven-js` / HTTP API |
+| **Beam, Microanalytics, Cabin, Cloudflare** | Script tag |
 
-Not every destination supports the full B2B analytics model. Web analytics tools track page views and simple events. Error monitoring provides user context for debugging. Feature flag tools manage targeting and experiment exposure. Each reference documents what the tool supports, what it doesn't, and when to use it alongside a full product analytics platform.
+### Error & Performance Monitoring
+User context for debugging. Identify calls attach user/account info to error reports.
+
+| Platform | Browser | Server |
+|----------|---------|--------|
+| **Sentry** | `@sentry/browser` | `@sentry/node` |
+| **New Relic** | Browser agent | Node agent |
+| **Azure Application Insights** | `@microsoft/applicationinsights-web` | `applicationinsights` |
+
+### Feature Flags & Experimentation
+Targeting attributes and experiment exposure tracking.
+
+| Platform | Browser | Server |
+|----------|---------|--------|
+| **LaunchDarkly** | `launchdarkly-js-client-sdk` | `@launchdarkly/node-server-sdk` |
+| **Statsig** | `statsig-js` | `statsig-node` |
+
+### Session & Behavior Tools
+Session recording and in-app guidance with user identification.
+
+| Platform | Integration |
+|----------|-------------|
+| **Hotjar** | Script tag / Identify API |
+| **UserPilot** | `userpilot.js` / Identify API |
+
+### Tag Management & Architecture
+
+| Platform | Use Case |
+|----------|----------|
+| **Google Tag Manager** | Container-based deployment for multiple destinations |
+| **Generic HTTP** | Any destination with an HTTP/REST API |
+
+Different tools serve different roles. The skills know what each destination supports and generate the right instrumentation for each. One audit covers all destinations. One tracking plan defines the events.
 
 Want to add a destination? See the [destination reference template](skills/product-tracking-generate-implementation-guide/references/destination-reference-template.md).
 
