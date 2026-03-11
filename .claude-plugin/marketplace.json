@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Open-source AI agent skills that make SaaS products data-ready for product analytics. Scan your codebase, design a tracking plan, generate instrumentation code.",
-    "version": "1.0.2"
+    "version": "1.1.0"
   },
   "plugins": [
     {
       "name": "product-tracking-skills",
       "source": "./",
       "description": "Full product tracking lifecycle — model, audit, design, instrument, implement, and maintain tracking for B2B SaaS products.",
-      "version": "1.0.2",
+      "version": "1.1.0",
       "author": {
         "name": "Accoil",
         "email": "hello@accoil.com"
