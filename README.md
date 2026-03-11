@@ -31,7 +31,7 @@ AI:  [Generates typed wrapper functions, delivery infrastructure, event constant
      Tracking code ready in tracking/
 ```
 
-Seven skills. One session. Your analytics tools finally work.
+Seven skills and a tracking watchdog agent. Your analytics tools finally work.
 
 ---
 
@@ -83,7 +83,7 @@ The skills encode the kind of knowledge that usually lives in a senior analytics
 
 ## How It Works
 
-Seven skills. Each produces artifacts that feed the next. Everything version-controlled in your repo.
+Seven skills plus a background tracking watchdog. Each skill produces artifacts that feed the next. Everything version-controlled in your repo.
 
 ```
 Business Case ──▶ Model ──▶ Audit ──▶ Design ──▶ Instrument ──▶ Implement ──▶ Maintain
@@ -98,6 +98,14 @@ Business Case ──▶ Model ──▶ Audit ──▶ Design ──▶ Instrum
 | **Instrument** | Translates the plan into SDK-specific guidance with template code | `.telemetry/instrument.md` |
 | **Implement** | Generates real typed wrapper functions, identity management, delivery infrastructure | `tracking/` directory |
 | **Maintain** | Updates tracking when features ship. Versioned with changelog. | Updated plan + `changelog.md` |
+
+### Tracking Watchdog (Background Agent)
+
+Once your tracking plan is in place, the **tracking-watchdog** agent runs in the background while you develop. It monitors code changes for new features and modified user flows, compares them against your tracking plan, and suggests new events or properties when it finds coverage gaps.
+
+It stays quiet when there's nothing to report. When it does speak up, it tells you exactly what event to add, what properties to include, and which entity level to attribute to — then recommends using the `instrument-new-feature` skill to make the changes.
+
+This is how tracking stays current as your product evolves, without anyone remembering to check.
 
 ---
 
@@ -128,7 +136,7 @@ Full identify → group → track lifecycle. Primary destinations for product us
 | **Amplitude** | `@amplitude/analytics-browser` | `@amplitude/analytics-node` |
 | **Mixpanel** | `mixpanel-browser` | `mixpanel` |
 | **PostHog** | `posthog-js` | `posthog-node` |
-| **RudderStack** | `rudder-sdk-js` | `@rudderstack/rudder-sdk-node` |
+| **RudderStack** | `@rudderstack/analytics-js` | `@rudderstack/rudder-sdk-node` |
 
 ### B2B Engagement Platforms
 Account-level engagement scoring and lifecycle signals.
@@ -149,7 +157,7 @@ Page-level and event tracking.
 | **Fathom** | Script tag / Events API |
 | **Simple Analytics** | Script tag / Events API |
 | **Usermaven** | `usermaven-js` / HTTP API |
-| **Beam, Microanalytics, Cabin, Cloudflare** | Script tag |
+| **Beam** *(shutting down Sept 2026)*, **Microanalytics, Cabin, Cloudflare** | Script tag |
 
 ### Error & Performance Monitoring
 User context for debugging. Identify calls attach user/account info to error reports.
@@ -166,7 +174,7 @@ Targeting attributes and experiment exposure tracking.
 | Platform | Browser | Server |
 |----------|---------|--------|
 | **LaunchDarkly** | `launchdarkly-js-client-sdk` | `@launchdarkly/node-server-sdk` |
-| **Statsig** | `statsig-js` | `statsig-node` |
+| **Statsig** | `@statsig/js-client` | `@statsig/statsig-node-core` |
 
 ### Session & Behavior Tools
 Session recording and in-app guidance with user identification.
@@ -251,6 +259,7 @@ Each skill is self-contained with its own `references/` directory. Trigger them 
 | `product-tracking-generate-implementation-guide` | *"create instrumentation guide"* |
 | `product-tracking-implement-tracking` | *"implement tracking"* or *"generate code"* |
 | `product-tracking-instrument-new-feature` | *"instrument this feature"* |
+| `tracking-watchdog` (agent) | *Runs automatically in background during feature development* |
 
 ---
 
