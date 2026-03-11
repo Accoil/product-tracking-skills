@@ -73,7 +73,7 @@ Handles communication with your analytics provider:
 
 const dispatch = async (eventType, payload) => {
   const apiKey = process.env.ANALYTICS_API_KEY;
-  const url = `https://in.accoil.com/v1/${eventType}`;
+  const url = `${process.env.ANALYTICS_ENDPOINT}/v1/${eventType}`;
   
   const body = JSON.stringify({
     ...payload,
@@ -244,10 +244,12 @@ const dispatch = async (eventType, payload) => {
 
 ```bash
 # Development
+ANALYTICS_ENDPOINT=https://your-provider.example.com
 ANALYTICS_API_KEY=dev_key
 ANALYTICS_DEBUG=true
 
 # Production
+ANALYTICS_ENDPOINT=https://your-provider.example.com
 ANALYTICS_API_KEY=prod_key
 # ANALYTICS_DEBUG not set or false
 ```
