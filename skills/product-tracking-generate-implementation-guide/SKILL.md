@@ -36,6 +36,7 @@ Read the matching destination reference before producing anything. References ar
 ### B2B Engagement Platforms
 
 - Accoil: [references/accoil.md](references/accoil.md)
+- Intercom: [references/intercom.md](references/intercom.md)
 - Journy: [references/journy.md](references/journy.md)
 
 ### Full-Stack & Web Analytics
