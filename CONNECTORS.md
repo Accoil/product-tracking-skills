@@ -34,6 +34,7 @@ Code generation supports these platforms:
 | Mixpanel | `mixpanel-browser` | `mixpanel` | Funnel/cohort analysis |
 | PostHog | `posthog-js` | `posthog-node` | Open-source, feature flags |
 | Accoil | `tracker.js` (CDN) | Direct API (`in.accoil.com`) | B2B engagement scoring; also via Segment |
+| Intercom | `@intercom/messenger-js-sdk` | `intercom-client` | Customer engagement, messaging, event tracking |
 | RudderStack | `@rudderstack/analytics-js` | `@rudderstack/rudder-sdk-node` | Open-source CDP |
 
 Used by: the **product-tracking-implement-tracking** skill for code generation, the **product-tracking-audit-current-tracking** skill for SDK detection.

@@ -4,7 +4,7 @@
 
 Most SaaS products have inconsistent events, missing context, and no real tracking plan. You're paying for Amplitude, Mixpanel, or PostHog — they work fine. You still can't answer basic questions because the instrumentation feeding them is broken.
 
-Product Tracking Skills scans your codebase, audits what's tracked, and generates the instrumentation needed to make your analytics tools actually work — for 24+ platforms, in any AI agent tool.
+Product Tracking Skills scans your codebase, audits what's tracked, and generates the instrumentation needed to make your analytics tools actually work — for 25+ platforms, in any AI agent tool.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/accoil/product-tracking-skills)](https://github.com/accoil/product-tracking-skills)
@@ -125,7 +125,7 @@ If you're a B2B SaaS team and you can't answer *"which features does account X a
 
 ## Supported Destinations
 
-Instrumentation references for 24+ destinations across 7 categories. Each reference documents real SDK call patterns, authentication, constraints, and common pitfalls.
+Instrumentation references for 25+ destinations across 7 categories. Each reference documents real SDK call patterns, authentication, constraints, and common pitfalls.
 
 ### Product Analytics & CDPs
 Full identify → group → track lifecycle. Primary destinations for product usage data.
@@ -144,6 +144,7 @@ Account-level engagement scoring and lifecycle signals.
 | Platform | Browser | Server |
 |----------|---------|--------|
 | **Accoil** | `tracker.js` (CDN) | Direct API |
+| **Intercom** | `@intercom/messenger-js-sdk` | `intercom-client` |
 | **Journy** | — | `@journyio/sdk` |
 
 ### Web Analytics
