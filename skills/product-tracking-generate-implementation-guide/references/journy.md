@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Journy.io docs -->
+<!-- Last verified: 2026-10-01 against journy.io OpenAPI spec v1.0.0 (api.journy.io/spec.json) and @journyio/sdk v3.4.0 -->
 # Journy Implementation Reference
 
 ## Overview
@@ -23,7 +23,7 @@ Journy provides a JavaScript snippet for browser-side tracking (generated per-do
 
 ### Browser (JavaScript Snippet)
 
-The browser tracking snippet is **not a static code block** — it is generated per-domain via the Journy dashboard (or the `getTrackingSnippet` SDK method). When connecting a website, you create a CNAME record pointing to `analyze.journy.io` (e.g., `go.example.com CNAME analyze.journy.io`), and Journy generates a snippet that references your custom tracking URL. The snippet sets a `__journey` cookie to link web activity to users.
+The browser tracking snippet is **not a static code block** — it is generated per-domain via the Journy dashboard (website settings in the Connections view) or the `getTrackingSnippet` SDK method. The snippet automatically calls `journy("init", { ... })` and `journy("pageview")`. All browser calls use the command-queue form `journy("<command>", { ... })`. When connecting a website, you create a CNAME record pointing to `analyze.journy.io` (e.g., `go.example.com CNAME analyze.journy.io`), and Journy generates a snippet that references your custom tracking URL. The snippet sets a `__journey` cookie to link web activity to users.
 
 Retrieve the snippet programmatically via the Node.js SDK:
 
@@ -75,9 +75,10 @@ Identifies a user and sets user-level properties. In Journy's model, users exist
 
 **Browser:**
 ```javascript
-journy.identify({
+journy('identify', {
   userId: 'usr_123',
   email: 'jane@example.com',
+  // verification: 'HMAC_OF_USER_ID', // optional identity verification (recommended)
   properties: {
     first_name: 'Jane',
     last_name: 'Doe',
@@ -126,9 +127,9 @@ Account tracking is central to Journy's model. Accounts are the primary entity f
 
 **Browser:**
 ```javascript
-journy.account({
+journy('account', {
   accountId: 'acc_456',
-  domain: 'acme.com',
+  // verification: 'HMAC_OF_ACCOUNT_ID', // optional identity verification (recommended)
   properties: {
     name: 'Acme Corp',
     plan: 'enterprise',
@@ -179,11 +180,13 @@ POST /accounts/upsert
 
 **Node.js:**
 ```typescript
+import { AccountIdentified, UserIdentified } from '@journyio/sdk';
+
 await client.addUsersToAccount({
-  account: { accountId: 'acc_456' },
+  account: AccountIdentified.byAccountId('acc_456'),
   users: [
-    { identification: { userId: 'usr_123' } },
-    { identification: { userId: 'usr_456' } },
+    UserIdentified.byUserId('usr_123'),
+    UserIdentified.byUserId('usr_456'),
   ],
 });
 ```
@@ -204,41 +207,18 @@ POST /accounts/users/add
 
 Up to 100 users can be added per call.
 
-**Browser:** The browser snippet typically links users to accounts implicitly when both `identify()` and `account()` are called in the same session, or via an explicit parameter:
+**Browser:** The documented browser `journy('identify')` payload accepts only `userId`, `email`, `verification`, and `properties` — there is no documented `accountId` parameter on identify. Link users to accounts from the backend with `addUsersToAccount()` / `POST /accounts/users/add`.
 
-```javascript
-journy.identify({
-  userId: 'usr_123',
-  accountId: 'acc_456',
-  email: 'jane@example.com',
-  properties: {
-    role: 'admin',
-  },
-});
-```
+<!-- UNVERIFIED: whether the browser snippet implicitly links the identified user to the account passed in journy('account') / journy('event', { accountId }) — not documented in the OpenAPI spec as of 2026-10-01 -->
 
 ### track()
 
 Records a custom event. Events in Journy are used to trigger playbooks, calculate health scores, and track engagement.
 
-**Browser:**
+**Browser:** (the user comes from the prior `journy('identify')`; pass `accountId` for account-scoped events)
 ```javascript
-journy.track('report_created', {
-  userId: 'usr_123',
-  accountId: 'acc_456',
-  properties: {
-    report_id: 'rpt_789',
-    report_type: 'standard',
-  },
-});
-```
-
-Alternatively, using the `addEvent` method:
-
-```javascript
-journy.addEvent({
+journy('event', {
   name: 'report_created',
-  userId: 'usr_123',
   accountId: 'acc_456',
   metadata: {
     report_id: 'rpt_789',
@@ -247,17 +227,20 @@ journy.addEvent({
 });
 ```
 
-**Node.js:**
+**Node.js:** `addEvent()` takes an `Event` instance built with `Event.forUser()`, `Event.forAccount()`, or `Event.forUserInAccount()`:
 ```typescript
-await client.addEvent({
-  name: 'report_created',
-  user: { userId: 'usr_123' },
-  account: { accountId: 'acc_456' },
-  metadata: {
+import { Event, UserIdentified, AccountIdentified } from '@journyio/sdk';
+
+await client.addEvent(
+  Event.forUserInAccount(
+    'report_created',
+    UserIdentified.byUserId('usr_123'),
+    AccountIdentified.byAccountId('acc_456'),
+  ).withMetadata({
     report_id: 'rpt_789',
     report_type: 'standard',
-  },
-});
+  }),
+);
 ```
 
 **HTTP API:**
@@ -266,8 +249,8 @@ POST /track
 {
   "name": "report_created",
   "identification": {
-    "userId": "usr_123",
-    "accountId": "acc_456"
+    "user": { "userId": "usr_123" },
+    "account": { "accountId": "acc_456" }
   },
   "metadata": {
     "report_id": "rpt_789",
@@ -285,28 +268,30 @@ POST /track
 Journy requires explicit account context on every event. Unlike tools where `group()` sets a sticky context for subsequent `track()` calls, Journy's event model expects `accountId` to be passed on each event.
 
 ```typescript
-// Every track call should include the accountId
-await client.addEvent({
-  name: 'task_completed',
-  user: { userId: 'usr_123' },
-  account: { accountId: 'acc_456' },
-  metadata: { task_id: 'task_456' },
-});
+// Every track call should include the account
+await client.addEvent(
+  Event.forUserInAccount(
+    'task_completed',
+    UserIdentified.byUserId('usr_123'),
+    AccountIdentified.byAccountId('acc_456'),
+  ).withMetadata({ task_id: 'task_456' }),
+);
 ```
 
 **For products with hierarchical groups:** Journy does not natively support multi-level group hierarchies (account > workspace > project). The platform operates at the account level. If your product has sub-account structures, attribute events to the top-level account and use event metadata to carry sub-group identifiers:
 
 ```typescript
-await client.addEvent({
-  name: 'task_completed',
-  user: { userId: 'usr_123' },
-  account: { accountId: 'acc_456' },
-  metadata: {
+await client.addEvent(
+  Event.forUserInAccount(
+    'task_completed',
+    UserIdentified.byUserId('usr_123'),
+    AccountIdentified.byAccountId('acc_456'),
+  ).withMetadata({
     task_id: 'task_456',
     workspace_id: 'ws_789',
     project_id: 'proj_123',
-  },
-});
+  }),
+);
 ```
 
 ## Account Traits That Matter
@@ -340,8 +325,8 @@ Call the account upsert whenever these traits change — not just on first creat
 
 | Constraint | Value |
 |---|---|
-| Event metadata properties | Keep payloads concise; strings, numbers, booleans, dates |
-| Property value types | Strings, numbers, booleans, dates, arrays, null (to delete) |
+| Event metadata properties | Keep payloads concise; strings, numbers, booleans, datetimes |
+| Property value types | Strings, numbers, booleans, arrays of strings, null (to delete) — no nested objects |
 | API rate limit | 1,800 requests per minute |
 | Rate limit headers | `X-RateLimit-Limit`, `X-RateLimit-Remaining` |
 | Users per add/remove call | 100 max |
@@ -351,7 +336,7 @@ Call the account upsert whenever these traits change — not just on first creat
 
 ## Common Pitfalls
 
-1. **Forgetting to link users to accounts** — In Journy, calling `identify()` and `account()` separately does not automatically associate the user with that account. You must explicitly link users to accounts, either by passing `accountId` in the identify call (browser) or by calling `addUsersToAccount()` (Node.js/API). Without this link, events cannot be attributed to accounts for health scoring.
+1. **Forgetting to link users to accounts** — In Journy, calling `identify()` and `account()` separately does not automatically associate the user with that account. You must explicitly link users to accounts by calling `addUsersToAccount()` (Node.js) / `POST /accounts/users/add` (API). Without this link, events cannot be attributed to accounts for health scoring.
 
 2. **Not passing accountId on track calls** — Unlike tools with sticky group context (Mixpanel, Usermaven), Journy expects explicit `accountId` on each event. If you omit it, the event is user-level only and does not contribute to account health scores or playbook triggers.
 
@@ -382,12 +367,13 @@ Call the account upsert whenever these traits change — not just on first creat
 **Node.js SDK:** The SDK methods return response objects. Check the response for success status:
 
 ```typescript
-const result = await client.addEvent({
-  name: 'report_created',
-  user: { userId: 'usr_123' },
-  account: { accountId: 'acc_456' },
-  metadata: { report_id: 'rpt_789' },
-});
+const result = await client.addEvent(
+  Event.forUserInAccount(
+    'report_created',
+    UserIdentified.byUserId('usr_123'),
+    AccountIdentified.byAccountId('acc_456'),
+  ).withMetadata({ report_id: 'rpt_789' }),
+);
 
 if (!result.success) {
   console.error('[Journy] Event failed:', result.error);

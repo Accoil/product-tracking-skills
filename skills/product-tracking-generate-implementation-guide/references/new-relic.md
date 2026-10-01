@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against New Relic docs -->
+<!-- Last verified: 2026-10-01 against New Relic docs (browser agent v1.323.0, Node.js agent v14.5.1) -->
 # New Relic Implementation Reference
 
 ## Overview
@@ -61,7 +61,7 @@ New Relic offers different loader tiers. As of browser agent v1.307.0, the old S
 - **Lite** -- page views and JavaScript errors only (~10 KB loader, ~15 KB downloaded, gzipped)
 - **Pro** -- adds AJAX tracking, session traces (~15.5 KB loader, ~21 KB downloaded, gzipped)
 - **Pro+SPA** -- adds Soft Navigations route change tracking (~17.5 KB loader, ~25 KB downloaded, gzipped)
-- **MicroAgent** -- smallest loader for controlled API-only capture; can run multiple instances per page
+- **MicroAgent** -- smallest loader for controlled API-only capture; can run multiple instances per page. New Relic's README notes this loader strategy is "slated to be deprecated and eventually removed" in favor of a single centralized agent instance -- avoid for new work.
 
 ```typescript
 // All tiers use the same import path
@@ -71,13 +71,13 @@ import { BrowserAgent } from '@newrelic/browser-agent/loaders/browser-agent';
 import { MicroAgent } from '@newrelic/browser-agent/loaders/micro-agent';
 ```
 
-When using npm, you can selectively enable features via a `features` array in the options. For example, to use `addPageAction()` or `recordCustomEvent()` with a MicroAgent, import and include `GenericEvents`:
+When using npm, you can build a custom agent with the `Agent` class and selectively enable features via a `features` array. For example, to use `addPageAction()` or `recordCustomEvent()`, import and include `GenericEvents`:
 
 ```typescript
-import { MicroAgent } from '@newrelic/browser-agent/loaders/micro-agent';
+import { Agent } from '@newrelic/browser-agent/loaders/agent';
 import { GenericEvents } from '@newrelic/browser-agent/features/generic_events';
 
-const agent = new MicroAgent({
+const agent = new Agent({
   // ...init, info, loader_config as above...
   features: [GenericEvents],
 });
@@ -96,7 +96,9 @@ const express = require('express');
 const app = express();
 ```
 
-Or with ES modules (requires Node.js v16.12.0+):
+**Node.js version:** The current agent (`newrelic` v14) declares `node >=22` in its package engines -- check New Relic's compatibility page before deploying on older runtimes.
+
+Or with ES modules:
 
 ```bash
 # Start your ESM application with the New Relic loader
@@ -269,9 +271,9 @@ newrelic.incrementMetric('Custom/ReportGeneration/Count');
 **HTTP Event API (direct):**
 
 ```bash
-POST https://insights-collector.newrelic.com/v1/accounts/{ACCOUNT_ID}/events
+POST https://insights-collector.newrelic.com/v1/accounts/events
 Content-Type: application/json
-Api-Key: YOUR_INSERT_KEY
+Api-Key: YOUR_LICENSE_KEY
 
 [{
   "eventType": "FormSubmission",
@@ -282,6 +284,10 @@ Api-Key: YOUR_INSERT_KEY
   "timestamp": 1706745600
 }]
 ```
+
+- **Auth:** `Api-Key` must be a key of the **License** type (Browser, Mobile, or User keys will not work).
+- **Regions:** EU uses `https://insights-collector.eu01.nr-data.net/v1/accounts/events`; JP uses `https://insights-collector.jp.nr-data.net/v1/accounts/events`.
+- **Limits:** 1 MB max per POST, 255 attributes per event, 255-char attribute names, 4,096-char attribute values, 100,000 POSTs per minute per account (429 when exceeded). `timestamp` may be Unix seconds or milliseconds.
 
 ## Performance Monitoring
 

@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against RudderStack docs -->
+<!-- Last verified: 2026-10-01 against RudderStack docs (@rudderstack/analytics-js v3.34.x, @rudderstack/rudder-sdk-node v3.0.x) -->
 # RudderStack Implementation Guide
 
 ## Overview
@@ -54,7 +54,7 @@ Add to `<head>`. Replace `WRITE_KEY` and `DATA_PLANE_URL` from your RudderStack 
 </script>
 ```
 
-> **Important (v3 change):** The implicit `page()` call at the end of the snippet (present in v1.1) has been removed in SDK v3. If you need automatic page tracking, either call `page()` explicitly or enable `autoTrack.pageLifecycle` in the load options.
+> **Important (v3 change):** The implicit `page()` call at the end of the snippet (present in v1.1) has been removed in SDK v3. Call `rudderanalytics.page()` explicitly (and on every route change in SPAs). Note: `autoTrack.pageLifecycle` in the load options does **not** fire `page()` calls — it only adds a `pageViewId` to event context and, with Beacon enabled, sends a `Page Unloaded` track event with time on page.
 
 ## Initialization (npm)
 
@@ -133,33 +133,16 @@ The SDK automatically attaches the identified user. You do not need to pass `use
 ### 4. Reset on Logout
 
 ```typescript
-analytics.reset();  // Clears userId, traits, and group associations
+analytics.reset();  // By default clears userId, user traits, groupId, and group traits (selectively via reset({ entries: {...} }))
 ```
 
-## Group Context on Track Calls
+## Group Attribution
 
-<!-- UNVERIFIED: The exact auto-attachment behavior of groupId to track calls after a group() call varies across SDK versions and is not fully documented. The JS SDK may include group traits in context automatically, but explicit groupId on track calls is the most reliable approach for downstream attribution. -->
+Group association comes from `group()` calls -- send one per group (per hierarchy level) the user belongs to. Track calls stay plain (event name + properties); RudderStack's common-fields spec defines no `context.groupId`, so don't add it to track calls expecting downstream attribution.
 
-After calling `group()`, the JavaScript SDK persists group traits and may include them in the `context` of subsequent calls. However, for **explicit and reliable group attribution** on track events -- especially when working with multiple groups or hierarchies -- include `groupId` directly in the track call's `context` object:
+Per-event group attribution, where it exists, is destination-specific -- check the destination's RudderStack docs. For example, the Amplitude and Mixpanel cloud-mode docs document groups only through `group()` calls (Amplitude: Group name/value trait settings, one group per call; Mixpanel: Group Key settings, looked up from `message.groupId` / `message.traits`).
 
-```typescript
-// Project-level event
-analytics.track('task.completed', {
-  task_id: 'task_456'
-}, {
-  context: { groupId: 'proj_123' }
-});
-
-// Account-level event
-analytics.track('plan.upgraded', {
-  from_plan: 'free',
-  to_plan: 'pro'
-}, {
-  context: { groupId: 'acc_456' }
-});
-```
-
-**Critical limitation:** RudderStack has no native group hierarchy support. The `context.groupId` is what downstream tools (Accoil, Amplitude, Mixpanel) use for event-level group attribution. Hierarchical rollups depend on the downstream tool supporting `parent_group_id` traits on group calls.
+**Critical limitation:** RudderStack has no native group hierarchy support. Hierarchical rollups depend on the downstream tool supporting `parent_group_id` traits on group calls.
 
 ## Node.js (Server-Side)
 
@@ -194,10 +177,13 @@ analytics.track({
   properties: {
     report_id: 'rpt_789',
     report_type: 'standard'
-  },
-  context: { groupId: 'acc_456' }
+  }
 });
 ```
+
+## HTTP API Limits
+
+Base URL is your data plane URL; auth is Basic with the source write key as username and an empty password. Max 32 KB per call; `/v1/batch` accepts up to 4 MB per request (32 KB per event). Oversized requests return `400`.
 
 ## Verifying Events
 
@@ -211,18 +197,18 @@ analytics.track({
 2. **Forgetting reset on logout** -- Previous user context persists for the next user
 3. **Missing group() calls** -- Downstream B2B tools lose account-level attribution
 4. **Server-side without userId** -- Unlike the browser SDK, there is no implicit user context
-5. **Assuming group context carries to track** -- For reliable attribution, always pass `context.groupId` explicitly on each track call
+5. **Expecting `context.groupId` on track calls to attribute events** -- It isn't part of RudderStack's spec; use `group()` calls, plus any destination-specific per-event mechanism
 
 ## Further Documentation
 
 This reference covers the essentials for product tracking implementation. For advanced topics, consult RudderStack's official documentation:
 
-- **Getting Started:** https://www.rudderstack.com/docs/get-started/
+- **Getting Started:** https://www.rudderstack.com/docs/get-started/introduction/
 - **JavaScript SDK:** https://www.rudderstack.com/docs/sources/event-streams/sdks/rudderstack-javascript-sdk/
 - **Node.js SDK:** https://www.rudderstack.com/docs/sources/event-streams/sdks/rudderstack-node-sdk/
 - **Identify:** https://www.rudderstack.com/docs/event-spec/standard-events/identify/
 - **Group:** https://www.rudderstack.com/docs/event-spec/standard-events/group/
 - **Track:** https://www.rudderstack.com/docs/event-spec/standard-events/track/
-- **Destinations:** https://www.rudderstack.com/docs/destinations/
+- **Destinations:** https://www.rudderstack.com/docs/destinations/overview/
 - **HTTP API:** https://www.rudderstack.com/docs/api/http-api/
 - **Transformations:** https://www.rudderstack.com/docs/transformations/overview/

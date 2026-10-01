@@ -1,10 +1,12 @@
-<!-- Last verified: 2026-03-10 against Statsig docs -->
+<!-- Last verified: 2026-10-01 against Statsig docs (@statsig/js-client v3.33.5, @statsig/statsig-node-core v0.23.1, statsig-node v6.5.2) -->
 
 # Statsig Implementation Reference
 
 ## Overview
 
 Statsig is a feature flag, experimentation, and product analytics platform. Unlike LaunchDarkly (which is primarily a flag tool), Statsig includes built-in analytics and metrics — it can track custom events, compute experiment results, and provide usage dashboards natively. It can function as both a flag tool and a lightweight analytics tool, though most teams still pair it with a dedicated product analytics platform (Amplitude, Mixpanel, etc.) for deeper behavioral analysis. Proprietary, cloud-only.
+
+**Ownership note:** OpenAI acquired Statsig in September 2025. On May 5, 2026, Amplitude announced it is taking on Statsig's brand and customers and will "maintain and develop the current Statsig platform across the cloud and data warehouse," with an integrated Amplitude + Statsig roadmap to follow. As of 2026-10-01 the SDKs, docs, and API domains are unchanged; watch for roadmap convergence with Amplitude Experiment.
 
 ## SDK Options
 
@@ -592,7 +594,7 @@ console.log(client.checkGate('feature_gate'));
 // Inspect experiment values
 const exp = client.getExperiment('experiment_name');
 console.log(exp.getGroupName()); // Which group the user is in
-console.log(exp.getValue()); // All parameter values
+console.log(exp.value); // All parameter values (raw object)
 
 // Browser console: access __STATSIG__ global for inspection
 ```
@@ -651,12 +653,13 @@ This reference covers the essentials for product tracking implementation. For ad
 - **JavaScript Client SDK:** https://docs.statsig.com/client/javascript-sdk
 - **Node.js Server Core SDK:** https://docs.statsig.com/server-core/node-core
 - **Node.js Server SDK (legacy):** https://docs.statsig.com/server/nodejsServerSDK
-- **React SDK:** https://docs.statsig.com/client/javascript-sdk/react
-- **Feature Gates:** https://docs.statsig.com/feature-gates/working-with
-- **Experiments:** https://docs.statsig.com/experiments-plus
-- **Custom Metrics:** https://docs.statsig.com/metrics
-- **Pulse (Analytics):** https://docs.statsig.com/pulse
+- **React SDK:** https://docs.statsig.com/client/React
+- **Feature Gates:** https://docs.statsig.com/feature-flags/overview
+- **Experiments:** https://docs.statsig.com/experiments/overview
+- **Custom Metrics:** https://docs.statsig.com/metrics/101
+- **Pulse (Analytics):** https://docs.statsig.com/experiments/interpreting-results/read-results
 - **Custom Event Logging:** https://docs.statsig.com/guides/logging-events
 - **Data Warehouse Export:** https://docs.statsig.com/integrations/data-exports/data_warehouse_exports
 - **StatsigUser Object:** https://docs.statsig.com/sdks/user
-- **JS SDK Migration Guide:** https://docs.statsig.com/client/javascript-sdk/migrating-from-statsig-js/
+- **JS SDK Migration Guide:** https://docs.statsig.com/client/migration-guides/MigrationFromOldJsClient
+- **Amplitude + Statsig announcement (May 2026):** https://amplitude.com/blog/amplitude-and-statsig-partnership

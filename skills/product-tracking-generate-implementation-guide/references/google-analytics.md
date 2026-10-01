@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Google Analytics docs -->
+<!-- Last verified: 2026-10-01 against Google Analytics docs -->
 # Google Analytics (GA4) Implementation Reference
 
 ## Overview
@@ -62,6 +62,8 @@ Content-Type: application/json
 
 Use the EU endpoint if your data should be collected in the EU (routes through European servers).
 
+**Note:** Google describes the Measurement Protocol as a mature, finalized product with no plans for deprecation, but now recommends the Data Manager API for new server-to-server event integrations. The Measurement Protocol remains the simplest option for product event tracking.
+
 ## Core Methods
 
 GA4 uses `gtag()` as a single function with different command names. The identify/group/track/page model maps as follows.
@@ -75,6 +77,13 @@ GA4 uses `config` with a `user_id` parameter to associate events with a known us
 gtag('config', 'G-XXXXXXXXXX', {
   user_id: 'usr_123'
 });
+```
+
+If the user ID becomes known after the initial page load (e.g., login in an SPA), Google recommends `gtag('set', ...)` instead of re-running `config`. It applies to all subsequent events on the page:
+
+```javascript
+gtag('set', { user_id: 'usr_123' });   // on login
+gtag('set', { user_id: null });        // on logout
 ```
 
 User properties (traits) are set separately via `set`:
@@ -113,7 +122,7 @@ await fetch(
 
 **When to call:**
 - On login or signup, once the user ID is known
-- On sign-out, set `user_id` to `null` to clear the association (do not use an empty string or placeholder)
+- On sign-out, set `user_id` to `null` to clear the association (do not send an empty string, a blank string, or the quoted strings `"null"`/`"NULL"`)
 - When user properties change (call `gtag('set', 'user_properties', {...})` again)
 
 **Important:**
@@ -258,7 +267,7 @@ await fetch(
 | Measurement Protocol events per request | 25 |
 | Measurement Protocol request size | 130 KB |
 | Measurement Protocol timestamp backdating | up to 72 hours via `timestamp_micros` |
-| Measurement Protocol requests per day | No documented hard limit; subject to quota |
+| Measurement Protocol request rate | At most 100 million non-conversion requests per hour per property |
 | Data freshness | Events appear in reports within 24-48 hours (real-time view available for recent events) |
 
 ## Common Pitfalls
@@ -356,6 +365,7 @@ This reference covers the essentials for product tracking implementation. For ad
 - **GA4 Event Reference:** https://developers.google.com/analytics/devguides/collection/ga4/reference/events
 - **Measurement Protocol (GA4):** https://developers.google.com/analytics/devguides/collection/protocol/ga4
 - **Measurement Protocol Validation:** https://developers.google.com/analytics/devguides/collection/protocol/ga4/validating-events
-- **Custom Dimensions and Metrics:** https://support.google.com/analytics/answer/10075209
-- **User Properties:** https://developers.google.com/analytics/devguides/collection/ga4/user-properties
+- **Custom Dimensions and Metrics:** https://support.google.com/analytics/answer/14240153
+- **User-ID (gtag.js):** https://developers.google.com/analytics/devguides/collection/ga4/user-id
+- **User Properties (Measurement Protocol):** https://developers.google.com/analytics/devguides/collection/protocol/ga4/user-properties
 - **DebugView:** https://support.google.com/analytics/answer/7201382

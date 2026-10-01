@@ -135,7 +135,7 @@ Content-Type: application/json
 
 **PostHog HTTP API:**
 ```
-POST https://app.posthog.com/capture/
+POST https://us.i.posthog.com/capture/
 Content-Type: application/json
 
 { "api_key": "...", "event": "report.created", "distinct_id": "usr_123", "properties": {...} }

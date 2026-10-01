@@ -1,0 +1,9 @@
+interface:
+  display_name: "Instrument new feature"
+  short_description: "Update tracking for a shipped feature"
+  brand_color: "#000000"
+  default_prompt: "Update the tracking plan for the feature I just shipped."
+
+policy:
+  products:
+    - CODEX

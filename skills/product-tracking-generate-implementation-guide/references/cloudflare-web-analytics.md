@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Cloudflare Web Analytics docs -->
+<!-- Last verified: 2026-10-01 against Cloudflare Web Analytics docs (beacon changelog through 2026-09-02) -->
 
 # Cloudflare Web Analytics Implementation Reference
 
@@ -30,11 +30,14 @@ For sites not proxied through Cloudflare, or when you need explicit control, add
 
 ```html
 <script
+  type="module"
   defer
   src="https://static.cloudflareinsights.com/beacon.min.js"
   data-cf-beacon='{"token": "YOUR_SITE_TOKEN"}'
 ></script>
 ```
+
+> **`type="module"` (July 2026):** The beacon targets modern syntax. Cloudflare now adds `type="module"` to automatically injected beacons, and manual embeds must add `type="module"` themselves so end-of-life browsers (e.g., Internet Explorer) skip the script instead of throwing a syntax error.
 
 The `token` is a site-specific identifier found in your Cloudflare dashboard under **Web Analytics > Manage site**. It is not a secret — it is safe to include in client-side code. Place the snippet before the closing `</body>` tag.
 
@@ -52,7 +55,9 @@ permissions:
 
 ### SPA Support
 
-Cloudflare Web Analytics automatically tracks SPA route changes. The beacon detects History API calls (`pushState`, `replaceState`) and records page views for each client-side navigation. This works with React Router, Next.js, Vue Router, and similar frameworks.
+Cloudflare Web Analytics automatically tracks SPA route changes, using (depending on browser support) the Soft Navigations API (Chromium), `navigate` events via the Navigation API, or by patching `history.pushState` and listening to `popstate`. This works with React Router, Next.js, Vue Router, and similar frameworks. Each route change sends the measurement for the previous route; the last route's measurement is sent when the user leaves the tab or closes the window.
+
+To disable SPA tracking (manual embed only), add `"spa": false` to the beacon config: `data-cf-beacon='{"token": "YOUR_SITE_TOKEN", "spa": false}'` (with GTM, use `beacon.min.js?token=...&spa=false`).
 
 For the automatic Cloudflare-proxied mode, SPA support is also handled by the injected beacon.
 
@@ -93,8 +98,8 @@ If you need custom event tracking, use a separate product analytics tool. (Cloud
 | Server-side API | Not available (but GraphQL Analytics API can query RUM data — see below) |
 | Cookie usage | None |
 | Cost | Free |
-| Data retention | 6 months |
-| Sites per account | 10 (soft limit, adjustable via support) |
+| Data retention | 6 months (unsampled for 7 days, then aggregated to ~10%) |
+| Sites per account | 10 non-proxied sites (soft limit, adjustable via support); no limit for Cloudflare-proxied sites |
 | Sampling | May apply on high-traffic sites (Adaptive Bit Rate) |
 
 ## Cloudflare-Specific Setup Notes
@@ -156,5 +161,7 @@ This reference covers the essentials for implementation. For advanced topics, co
 - **Core Web Vitals:** https://developers.cloudflare.com/web-analytics/data-metrics/core-web-vitals/
 - **FAQs:** https://developers.cloudflare.com/web-analytics/faq/
 - **Beacon changelog:** https://developers.cloudflare.com/web-analytics/changelog/
+- **SPA guide:** https://developers.cloudflare.com/web-analytics/get-started/web-analytics-spa/
+- **Limits:** https://developers.cloudflare.com/web-analytics/limits/
 - **GraphQL Analytics API:** https://developers.cloudflare.com/analytics/graphql-api/
 - **Cloudflare dashboard:** https://dash.cloudflare.com/

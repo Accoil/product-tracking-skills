@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Amplitude docs -->
+<!-- Last verified: 2026-10-01 against Amplitude docs (Browser SDK 2.47.x, Node SDK 1.5.x) -->
 # Amplitude Implementation Guide
 
 ## Overview
@@ -65,6 +65,9 @@ amplitude.identify(identify);
 - When user properties change
 
 ### Group (Account Context)
+
+**Note:** Groups (Accounts) is a paid add-on, available on Plus, Growth, and Enterprise plans (not Free).
+
 ```typescript
 amplitude.setGroup('account', 'acc_456');
 
@@ -228,7 +231,7 @@ analytics.track('task.completed', {
 
 - Amplitude does **not** natively support hierarchical group rollups. Use `parent_group_id` as a group property so downstream processing can reconstruct the hierarchy.
 - The `groups` option on `track()` overrides the user's current group associations for that specific event.
-- Maximum 5 group types per Amplitude project.
+- Maximum 5 group types per Amplitude project (requires the Accounts add-on).
 
 ## Session Management
 
@@ -299,11 +302,11 @@ In Amplitude UI, search by user ID to see their event stream.
 
 This reference covers the essentials for product tracking implementation. For advanced topics, consult Amplitude's official documentation:
 
-- **Getting Started:** https://amplitude.com/docs/getting-started
+- **Getting Started:** https://amplitude.com/docs/data/data-get-started
 - **Browser SDK:** https://amplitude.com/docs/sdks/analytics/browser/browser-sdk-2
 - **Node.js SDK:** https://amplitude.com/docs/sdks/analytics/node/node-js-sdk
 - **Identify API:** https://amplitude.com/docs/apis/analytics/identify
 - **Group Analytics:** https://amplitude.com/docs/sdks/analytics/browser/browser-sdk-2#user-groups
-- **Revenue Tracking:** https://amplitude.com/docs/sdks/analytics/browser/browser-sdk-2#revenue-tracking
+- **Revenue Tracking:** https://amplitude.com/docs/sdks/analytics/browser/browser-sdk-2#track-revenue
 - **Amplitude Experiment (A/B Testing):** https://amplitude.com/docs/feature-experiment/overview
 - **HTTP API:** https://amplitude.com/docs/apis/analytics/http-v2

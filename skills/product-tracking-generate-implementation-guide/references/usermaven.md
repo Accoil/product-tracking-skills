@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Usermaven docs -->
+<!-- Last verified: 2026-10-01 against Usermaven docs and @usermaven/sdk-js v1.5.15 -->
 
 # Usermaven Implementation Reference
 
@@ -109,6 +109,8 @@ Authentication options (use one):
 3. **JSON body:** include `"api_key": "YOUR_API_KEY"` in the payload
 
 Both the API Key and Server Token are found in **Workspace Settings > Setup > HTTP API tab**.
+
+The docs also list `/api/v1/s2s/events` as an alternative path, and multiple events can be submitted as a JSON array in a single POST.
 
 ## Core Methods
 
@@ -245,7 +247,7 @@ POST /api/v1/s2s/event?token=YOUR_API_KEY.YOUR_SERVER_TOKEN
 
 **Key details:**
 - Company context is most commonly set as part of the `id()` call using the nested `company` object.
-- The SDK also exposes a standalone `group(groupProperties)` method (added in SDK v1.5.x), though official docs still primarily show the `id()` approach. <!-- UNVERIFIED: group() method is listed in SDK README but not documented in Usermaven's official docs pages. Behavior and parameter signature for group() should be confirmed against SDK source or Usermaven support. -->
+- The SDK also exposes a standalone `group(companyProps, doNotSendEvent?)` method, though official docs still primarily show the `id()` approach. Per the SDK v1.5.15 type definitions, `companyProps` requires `id`, `name`, and `created_at` (CDN form: `usermaven('group', {...})`). <!-- UNVERIFIED: group() runtime behavior is not described in Usermaven's official docs pages as of 2026-10-01; signature confirmed from @usermaven/sdk-js v1.5.15 typings only. -->
 - The `company.id` field is the unique account identifier.
 - Standard company fields: `id`, `name`, `created_at`. Additional properties go inside `custom`.
 - Once the company is set via `id()`, subsequent `track()` calls are automatically attributed to that company.
@@ -316,7 +318,7 @@ The SDK provides additional state-management methods:
 
 - **`set(properties, options)`** — stores persistent properties that are included with all future events (e.g., A/B test variant)
 - **`unset(propertyName, options)`** — removes a previously set persistent property
-- **`reset()`** — clears all client state and local storage (call on logout)
+- **`reset(resetAnonId?)`** — clears all client state and local storage (call on logout)
 
 ## Group Context on Track Calls
 
@@ -353,7 +355,7 @@ usermaven.track('dashboard_viewed', {});
 
 | Method | Required Fields | Notes |
 |---|---|---|
-| `id()` | `id` | `email` strongly recommended |
+| `id()` | `id` | Official docs label `id`, `email`, and `created_at` as the required attributes |
 | `id()` with company | `id`, `company.id` | `company.name` strongly recommended |
 | `track()` | event name | User must be identified first for attribution |
 | `pageview()` | none | Auto-captured data is sufficient |
@@ -392,13 +394,15 @@ usermaven.track('dashboard_viewed', {});
 
 **Browser DevTools:** Open the Network tab and filter for requests to `events.usermaven.com`. Each event sends a POST request. Inspect the request body to verify the event type, user ID, company ID, and properties.
 
-**SDK debug mode:** Pass `logLevel: 'debug'` in the initialization config to enable verbose console logging:
+**SDK debug mode:** Pass `logLevel: LogLevel.DEBUG` (the SDK exports a numeric `LogLevel` enum) in the initialization config to enable verbose console logging. For the CDN snippet, use `data-log-level="debug"`:
 
 ```typescript
+import { usermavenClient, LogLevel } from '@usermaven/sdk-js';
+
 const usermaven = usermavenClient({
   key: 'YOUR_API_KEY',
   tracking_host: 'https://events.usermaven.com',
-  logLevel: 'debug',
+  logLevel: LogLevel.DEBUG,
 });
 ```
 
@@ -412,14 +416,14 @@ const usermaven = usermavenClient({
 
 This reference covers the essentials for product tracking implementation. For advanced topics, consult Usermaven's official documentation:
 
-- **Getting Started:** https://usermaven.com/docs/getting-started/installing-usermaven
-- **JavaScript SDK (CDN):** https://usermaven.com/docs/integrations/javascript
-- **NPM Package:** https://usermaven.com/docs/integrations/npm-package
-- **Node.js SDK:** https://usermaven.com/docs/integrations/node-js
-- **Identifying Users:** https://usermaven.com/docs/getting-started/sending-your-users-data
-- **Identity Resolution:** https://usermaven.com/docs/getting-started/identity-resolution
-- **Custom Events:** https://usermaven.com/docs/getting-started/event-tracking-setup
-- **Server-Side Events API:** https://usermaven.com/docs/integrations/event-api
-- **Parameters Reference:** https://usermaven.com/docs/integrations/reference/parameters
-- **Auto-Capture:** https://usermaven.com/docs/advanced-tracking/exclude-autocapture-events
-- **All Integrations:** https://usermaven.com/docs/integrations-and-sdks-overview
+- **Getting Started:** https://usermaven.com/docs/articles/installing-usermaven-da0db9af
+- **JavaScript SDK (CDN):** https://usermaven.com/docs/articles/javascript-57ccf21f
+- **NPM Package:** https://usermaven.com/docs/articles/npm-package-4551139e
+- **Node.js SDK:** https://usermaven.com/docs/articles/node-js-ad21bae4
+- **Identifying Users:** https://usermaven.com/docs/articles/sending-your-users-data-96ca4d18
+- **Identity Resolution:** https://usermaven.com/docs/articles/identity-resolution-b95b51ff
+- **Custom Events:** https://usermaven.com/docs/articles/event-tracking-setup-ab7cc578
+- **Server-Side Events API:** https://usermaven.com/docs/articles/event-api-18ab9cce
+- **Parameters Reference:** https://usermaven.com/docs/articles/parameters-45c0fee5
+- **Auto-Capture:** https://usermaven.com/docs/articles/exclude-autocapture-events-49aa6ebe
+- **All Integrations:** https://usermaven.com/docs/articles/integrations-and-sdks-overview-c5f1169a

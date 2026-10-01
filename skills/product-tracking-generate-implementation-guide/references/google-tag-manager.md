@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Google Tag Manager docs -->
+<!-- Last verified: 2026-10-01 against Google Tag Manager docs -->
 # Google Tag Manager Implementation Reference
 
 ## Overview
@@ -320,7 +320,7 @@ Create tags for each destination + event combination:
 
 | Constraint | Value |
 |---|---|
-| Container size limit | 200 KB (compressed) |
+| Container size limit | ~200 KB (widely reported; Google's docs only say to optimize when the Versions page Size indicator exceeds 70%) <!-- UNVERIFIED: absolute 200 KB figure not stated in official GTM docs as of 2026-10-01; see https://support.google.com/tagmanager/answer/2772488 --> |
 | Maximum tags per container | No hard limit; performance degrades with many tags |
 | DataLayer push size | No hard limit; keep payloads small for performance |
 | Tag firing timeout | Configurable per tag (default: no timeout) |
@@ -392,7 +392,9 @@ The Forge-approved domain `*.googletagmanager.com` exists because the gtag.js sn
 This reference covers the essentials for understanding GTM's role in product tracking. For advanced topics, consult Google's official documentation:
 
 - **GTM Overview:** https://developers.google.com/tag-platform/tag-manager
-- **GTM Web Installation:** https://support.google.com/tagmanager/answer/14842164
+- **Create Account and Container:** https://support.google.com/tagmanager/answer/14842164
+- **GTM Web Installation:** https://support.google.com/tagmanager/answer/14847097
+- **Container Size and Efficiency:** https://support.google.com/tagmanager/answer/2772488
 - **DataLayer Reference:** https://developers.google.com/tag-platform/tag-manager/datalayer
 - **About Tags:** https://support.google.com/tagmanager/answer/3281060
 - **Google Tag Setup:** https://support.google.com/tagmanager/answer/12002338

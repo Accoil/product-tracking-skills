@@ -396,7 +396,9 @@ In B2B products with hierarchical groups (account > workspace > project), every 
 The tracking plan assigns each event a `group_level` (e.g., project, workspace, account). The implementation must:
 
 1. **Issue a group() call for every level in the hierarchy** — Each group must exist before events reference it
-2. **Pass the correct group ID on every track() call** — Via context object, groups property, or $groups property depending on the SDK
+2. **Attribute each track() call to the correct group, the way the destination supports it** — e.g. Amplitude `groups`, a Mixpanel group-key property, PostHog `$groups`. Through a CDP (Segment/RudderStack), `group()` is the generic mechanism; per-event groups go through the destination's documented option, not a blanket `context.groupId`
+
+**Accoil exception:** Accoil track calls carry only `userId` and the event name — no `context.groupId` or other group context. Accoil attributes events through the user's membership (identify with `groupId`, `group()` calls) and rolls up via `parent_group_id`. For Accoil, step 2 becomes "associate the user with the event's group via `group()`" — the track payload stays name-only (see the Accoil dispatch below).
 
 ### Updated track() Helper
 
@@ -413,7 +415,27 @@ export const track = async (context, eventName, groupId) => {
   const events = [
     { type: 'identify', userId, groupId: accountId, traits: { name: userId } },
     { type: 'group', groupId: accountId, traits: { name: accountId } },
-    { type: 'track', userId, event: eventName, context: { groupId: groupId || accountId } },
+    // eventGroupFields: destination-specific per-event group fields (e.g. Amplitude groups,
+    // Mixpanel group-key property, PostHog $groups) — not context.groupId
+    { type: 'track', userId, event: eventName, ...eventGroupFields(groupId || accountId) },
+  ];
+
+  await analyticsQueue.push(events);
+};
+```
+
+**Accoil dispatch:** When the destination is Accoil, drop any group fields from the track call — attribute through membership instead by associating the user with the specific group:
+
+```javascript
+// events.js — Accoil: name-only track, attribution via membership
+export const track = async (context, eventName, groupId) => {
+  const userId = getUserId(context);
+  const accountId = getAccountId(context);
+
+  const events = [
+    { type: 'identify', userId, groupId: accountId, traits: { name: userId } },
+    { type: 'group', userId, groupId: groupId || accountId, traits: {} }, // membership; parent_group_id set when the group is established
+    { type: 'track', userId, event: eventName },                          // no context, no properties
   ];
 
   await analyticsQueue.push(events);

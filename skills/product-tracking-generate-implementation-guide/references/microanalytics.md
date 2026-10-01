@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Microanalytics docs -->
+<!-- Last verified: 2026-10-01 against Microanalytics docs and live script.js source -->
 # Microanalytics Implementation Reference
 
 ## Overview
@@ -20,7 +20,7 @@ Microanalytics is a privacy-focused, cookieless web analytics tool hosted in the
 ></script>
 ```
 
-The `id` attribute is your site-specific tracking ID, found in your Microanalytics dashboard. Replace `ZwSg9rf6GA` with your actual ID.
+Copy the snippet exactly as shown in your Microanalytics dashboard. **Do not change the `id` attribute:** the live `script.js` source locates its own tag with a hardcoded `document.getElementById('ZwSg9rf6GA')` and reads `data-host`/`data-dnt` from it, so a different `id` breaks tracking. The site is matched from the page URL sent with each request. The script stores a random per-tab `visitorId` and `firstReferrer` in `sessionStorage` (no cookies).
 
 The optional `data-dnt` attribute controls Do Not Track header compliance. When set to `"true"`, the script will not send tracking requests for visitors whose browsers have DNT enabled. Defaults to `"false"`.
 
@@ -118,7 +118,7 @@ curl --location --request GET \
 | Cookie usage | None |
 | Fingerprinting | None |
 | Tracking script size | < 1KB |
-| Free plan limit | 1,000 pageviews/month, 1 website |
+| Plans | No free plan listed; paid plans from Starter (25,000 pageviews/month, 10 websites) to Pro (1,000,000 pageviews/month, 100 websites) |
 | Data retention | Varies by plan |
 | Server-side tracking | Not supported (client-side only) |
 | REST API | Read-only, included in all plans |
@@ -157,6 +157,7 @@ This reference covers the essentials for implementation. Consult:
 - **Websites API docs:** https://app.microanalytics.io/developers/websites
 - **Account API docs:** https://app.microanalytics.io/developers/account
 - **API key management:** https://app.microanalytics.io/account/api
-- **Articles / blog:** https://microanalytics.io/articles/index.html
+- **Articles / blog:** https://microanalytics.io/articles
+- **Pricing:** https://microanalytics.io/pricing
 
 **Documentation note:** The custom event API (`window.pa.track()`) and SPA behavior documented here were verified by inspecting the tracking script source (`microanalytics.io/js/script.js`) and the REST API developer pages. The REST API documentation is available behind the app subdomain at the links above.

@@ -12,7 +12,7 @@ Frontend Events --> invoke() --> Backend Resolver --> Queue --> Consumer --> Ana
                                    Backend Events -----+
 ```
 
-**Key constraint:** Forge Custom UI frontends run in a sandboxed iframe and **cannot make direct network calls** to external services. Every analytics event — whether triggered by a UI interaction or backend business logic — must route through backend resolvers using `invoke()` from `@forge/bridge`. This is not a design choice; it is a hard platform constraint.
+**Key constraint:** Forge Custom UI frontends run in a sandboxed iframe and **cannot make direct network calls** to external services unless the domain is declared under `permissions.external.fetch.client` — which this architecture deliberately avoids. Every analytics event — whether triggered by a UI interaction or backend business logic — must route through backend resolvers using `invoke()` from `@forge/bridge`, so the backend controls exactly what leaves the app.
 
 This affects tracking plan design in three ways:
 
@@ -135,7 +135,7 @@ Forge enforces an allowlist of pre-approved analytics domains. Only these domain
 | **Cloudflare** | `static.cloudflareinsights.com` |
 | **Fathom** | `*.cdn.usefathom.com` |
 | **Statsig** | `*.statsigapi.net`, `statsigapi.net`, `*.featureassets.org`, `featureassets.org`, `*.prodregistryv2.org`, `prodregistryv2.org` |
-| **UserPilot** | `*.userpilot.io` |
+| **Userpilot** | `*.userpilot.io` |
 | **Usermaven** | `*.events.usermaven.com`, `*.um.contentstudio.io` |
 | **Beam Analytics** | `*.beamanalytics.b-cdn.net` |
 | **Microanalytics** | `*.microanalytics.io` |

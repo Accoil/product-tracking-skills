@@ -1,0 +1,9 @@
+interface:
+  display_name: "Business case"
+  short_description: "Make the case for product telemetry"
+  brand_color: "#000000"
+  default_prompt: "Write a business case for adding product analytics."
+
+policy:
+  products:
+    - CODEX

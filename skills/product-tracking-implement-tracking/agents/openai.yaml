@@ -1,0 +1,9 @@
+interface:
+  display_name: "Implement tracking"
+  short_description: "Generate typed tracking code"
+  brand_color: "#000000"
+  default_prompt: "Generate typed tracking code from our tracking plan."
+
+policy:
+  products:
+    - CODEX
