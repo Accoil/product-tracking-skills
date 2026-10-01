@@ -22,12 +22,13 @@ Determine the tool's category. This determines which sections of the reference a
 |---|---|---|---|---|---|---|
 | **Product Analytics** | Amplitude, Mixpanel, PostHog | Required | Required | Required | Required | Full |
 | **Customer Data Platform** | Segment, RudderStack | Required | Required | Required | Required | Full |
-| **B2B Engagement** | Accoil, Journy | Required | Required | Required | Optional | Full |
-| **Web Analytics** | Plausible, Fathom, Simple Analytics, Beam, Microanalytics, WithCabin | N/A | N/A | Limited | Core | Minimal |
+| **B2B Engagement** | Accoil, Journy, CustomerScore.io | Required | Required | Required | Optional | Full |
+| **Web Analytics** | Plausible, Fathom, Simple Analytics, Microanalytics, WithCabin | N/A | N/A | Limited | Core | Minimal |
 | **Full-Stack Analytics** | Google Analytics, Usermaven | Optional | Optional | Required | Required | Partial |
 | **Error / Performance** | Sentry, New Relic, Azure AppInsights | Context only | N/A | Errors/perf | N/A | None |
 | **Feature Flags / Experimentation** | LaunchDarkly, Statsig | Context | Context | Flag evals | N/A | Partial |
-| **Session / Behavior** | HotJar, UserPilot | Tag only | N/A | Events | Auto | Minimal |
+| **Product Adoption / Digital Adoption** | Userpilot | Required | Required (nested `company` in identify; one company per user) | Required | Auto (`reload()` in SPAs) | Full |
+| **Session / Behavior** | HotJar | Tag only | N/A | Events | Auto | Minimal |
 | **Tag Management** | Google Tag Manager | N/A | N/A | Routing layer | N/A | None |
 
 **B2B Fit** indicates how well the tool maps to the standard identify → group → track model:
@@ -248,7 +249,7 @@ Full reference required. Emphasize:
 - Account trait recommendations (MRR, plan, created_at)
 - Hierarchical group support and rollup behavior
 
-### Web Analytics (Plausible, Fathom, Simple Analytics, Beam, etc.)
+### Web Analytics (Plausible, Fathom, Simple Analytics, etc.)
 
 Shorter reference. Focus on:
 - **Page view tracking** — this is the core capability
@@ -276,7 +277,16 @@ Focus on:
 - **Tracking flag evaluations as events** — how to pipe flag exposure data to product analytics
 - **Integration pattern** — typically paired with a product analytics tool for experiment analysis
 
-### Session / Behavior Tools (HotJar, UserPilot)
+### Product Adoption / Digital Adoption Platforms (Userpilot)
+
+Full reference required. These tools combine in-app guidance with product analytics and a company entity. Emphasize:
+- **Identify first** — nothing renders or tracks until the user is identified; document the SPA re-evaluation call (e.g. `reload()`)
+- **Company model** — how the user is attached to a company (often a nested object in identify rather than a `group()` call), whether a user can belong to more than one company, and any hierarchy limits
+- **Server-side APIs** — identify, company and track endpoints, auth format, regional hosts, rate limits, bulk sync
+- **CDP routing** — whether Segment/RudderStack `group()` maps to the tool's company
+- **Privacy** — auto-capture and session replay masking, since these tools inject into and observe the DOM
+
+### Session / Behavior Tools (HotJar)
 
 Focus on:
 - **User identification** — how to tag sessions with known user IDs

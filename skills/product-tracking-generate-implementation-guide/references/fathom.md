@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Fathom docs -->
+<!-- Last verified: 2026-10-01 against Fathom docs -->
 # Fathom Implementation Reference
 
 ## Overview
@@ -92,6 +92,7 @@ Events do **not** need to be pre-created in the Fathom dashboard. When you call 
 - You cannot rename an event once it has been created and fired to the dashboard, but you can change the event name in your code (which creates a new event).
 - No way to attach metadata, categories, or labels to events.
 - Events count as page views against your plan's monthly pageview allowance.
+- There is no server-side event ingestion endpoint. The API's old "Create event" endpoint is deprecated; the API only lists/manages events that were tracked client-side.
 
 ### Revenue / Value Tracking
 
@@ -102,7 +103,7 @@ Attach a monetary value to any event. Values are specified in the smallest curre
 fathom.trackEvent('widget purchase', { _value: 2999 });
 ```
 
-The currency is set per-site in the Fathom dashboard (not in code).
+The currency is set per event in the Fathom dashboard (site settings > Events, or the currency icon on the dashboard Events box) or via the API's "Set event currency" endpoint -- not in code.
 
 ## Limits
 
@@ -111,10 +112,9 @@ The currency is set per-site in the Fathom dashboard (not in code).
 | Events per site | Unlimited (events count as pageviews against plan allowance) |
 | Custom properties per event | 0 (not supported) |
 | Event value | Integer (cents), no fractional values |
-| Sites per account | Up to 50 included on all plans |
-| API rate limit (Sites & Events) | 2,000 requests per hour |
-| API rate limit (Aggregations & Current Visitors) | 10 requests per minute |
-| Data retention | Unlimited |
+| Sites per account | At least 50 included on all plans (extra packs of 50 available) |
+| API rate limit | 600 requests per hour, 5 concurrent (included tier); higher paid tiers up to 16,000/hour, 25 concurrent. Exceeding returns `429` with `Retry-After` |
+| Data retention | Full history while subscribed |
 
 ## B2B Limitation
 
@@ -174,6 +174,8 @@ This reference covers the essentials for implementation. For advanced topics, co
 - **Script Attributes:** https://usefathom.com/docs/script/script-advanced
 - **SPA Tracking:** https://usefathom.com/docs/script/script-advanced
 - **Custom Events:** https://usefathom.com/docs/events/overview
-- **Custom Domains:** https://usefathom.com/docs/script/custom-domains (no longer offered)
+- **Exclude Your Own Visits:** https://usefathom.com/docs/script/exclude-visits
+- **Site Firewall Settings:** https://usefathom.com/docs/script/firewall
+- **API Rate Limits:** https://usefathom.com/api/v1/rate-limits
 - **API Reference:** https://usefathom.com/api
 - **Framework Guides:** https://usefathom.com/docs/integrations

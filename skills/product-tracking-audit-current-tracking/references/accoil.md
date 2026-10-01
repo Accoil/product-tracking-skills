@@ -1,3 +1,4 @@
+<!-- Last verified: 2026-10-01 against developer.accoil.com (Ingress API v2) -->
 # Accoil Implementation Guide
 
 ## Overview
@@ -12,7 +13,7 @@ Accoil is a B2B product engagement analytics platform built specifically for B2B
 | **Accoil Direct API (v2)** | Server-side, no Segment | Via `/v2/group` endpoint |
 | **Via Segment** | Already using Segment | Segment `group()` flows through |
 
-All three achieve the same result. Choose based on your stack.
+Additional integration destinations include **RudderStack**, **PostHog**, and **Amplitude**. All methods achieve the same result. Choose based on your stack.
 
 ---
 
@@ -62,7 +63,7 @@ Call when accounts are created or traits change (upgrade, downgrade, cancellatio
 accoil.group("acc_456", {
   name: "Acme Corp",
   status: "active",
-  mrr: 5000,
+  mrr: 500000, // $5,000 in cents — MRR is specified in cents, not dollars
   created_at: "2023-06-01T00:00:00Z"
 });
 ```
@@ -73,7 +74,7 @@ accoil.group("acc_456", {
 accoil.track("Report_Created");
 ```
 
-**Important:** Accoil track calls accept **only the event name**. No event properties are stored. Encode meaningful distinctions in the event name itself.
+**Important:** Accoil track calls accept **only the event name**. No event properties are stored. Do not encode variants or property values in the event name.
 
 ### Audit patterns for tracker.js
 
@@ -133,12 +134,12 @@ Required: `userId`. Recommended traits: `email`, `name`, `created_at`.
     "name": "Acme Corp",
     "created_at": "2023-06-01T00:00:00Z",
     "status": "paid",
-    "mrr": 50000
+    "mrr": 500000
   }
 }
 ```
 
-Required: `groupId`. Recommended traits: `name`, `created_at`.
+Required: `groupId`. `userId` is optional on group calls — omit it for scheduled account-only trait updates. MRR is specified in cents, not dollars (e.g., `500000` = $5,000). Recommended traits: `name`, `created_at`, `status`.
 
 ### POST /v2/track
 
@@ -198,9 +199,11 @@ function trackEvent(userId: string, event: string) {
 
 If already using Segment, add Accoil as a destination. All `identify`, `group`, and `track` calls flow through automatically.
 
-1. In Segment: Destinations > Add Destination > Accoil
-2. Enter your Accoil API key
-3. Map group ID to Accoil's account identifier
+1. In Segment: Connections > Catalog, search for **Accoil Analytics**, click Add Destination
+2. Choose the Segment source to connect
+3. Enter your Accoil API key and enable the destination
+
+Segment `page` and `screen` calls are sent to Accoil as track events.
 
 ```typescript
 // Segment calls that Accoil receives
@@ -220,9 +223,17 @@ Accoil stores **event names only** — not properties. This affects how you desi
 | Other SDKs | Accoil |
 |-----------|--------|
 | `track("report.created", { type: "standard" })` | `track("Report_Created")` |
-| `track("report.created", { type: "template" })` | `track("Template_Report_Created")` |
+| `track("report.exported", { format: "pdf" })` | `track("Report_Exported")` |
 
-If you need to distinguish variants in Accoil, encode the distinction in the event name. For other downstream tools (Amplitude, Mixpanel), you can still send properties — Accoil will simply ignore them.
+**Do not put variants in event names.** No dynamic values or property values in names — `Report_Exported`, not `Report_Exported_PDF`. Encoding variants creates event sprawl and fragments engagement scoring. Track the action once; put descriptive context on user/account traits via `identify()`/`group()`, and send properties to other downstream tools (Amplitude, Mixpanel) — Accoil simply ignores them.
+
+**When auditing:** Flag variant-encoded Accoil event names (e.g., `Report_Exported_PDF`, `Template_Report_Created`) as event sprawl — candidates to consolidate into a single action event.
+
+## Track Calls and Group Attribution
+
+Track calls carry only `userId` and the event name — Accoil uses no group context on track calls. Accoil attributes events to groups through the user's membership, established by `identify()` (with `groupId`) and `group()` calls. Hierarchy rollup comes from the `parent_group_id` traits on `group()` calls.
+
+**When auditing:** If existing code sends `context.groupId` (or other group context) on track calls bound for Accoil, report it as unnecessary — Accoil ignores it. It is not a correct or required pattern for Accoil. If events appear on the wrong group, the fix is user membership via `group()`, not event context.
 
 ## Critical: Group Calls Are Essential
 
@@ -240,7 +251,7 @@ Accoil is account-centric. Without `group()` calls, events can't be attributed t
 | `name` | Account identification | string |
 | `created_at` | Cohort analysis | ISO 8601 |
 | `plan` / `status` | Plan-based segmentation | string |
-| `mrr` | Revenue weighting | number |
+| `mrr` | Revenue weighting (in cents, not dollars) | number (integer) |
 | `industry` | Segmentation | string |
 | `employee_count` | Size segmentation | number |
 
@@ -261,7 +272,7 @@ Most common issue. Accoil needs account context for scoring.
 
 ### 2. Expecting Event Properties
 Accoil ignores event properties. Only the event name is stored.
-**Fix:** Encode meaningful distinctions in the event name.
+**Fix:** Track the action once without variants in the name; put context on user/account traits.
 
 ### 3. Silent Auth Failures
 The API returns 202 even with invalid API keys — it validates async.
@@ -274,5 +285,6 @@ MRR, plan, status change but `group()` isn't called again.
 ## Debugging
 
 - **Accoil Dashboard:** Live events appear in the debug console within seconds.
+  <!-- UNVERIFIED: debug console latency not documented on developer.accoil.com; the Segment integration page says to allow 8-24 hours for data to begin appearing -->
 - **Segment Event Delivery:** If using Segment, check the delivery tab for Accoil destination.
 - **Test Account:** Create a test account with known events, verify in Accoil's account view.

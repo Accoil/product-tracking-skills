@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Azure Application Insights docs -->
+<!-- Last verified: 2026-10-01 against Azure Application Insights docs (applicationinsights-web v3.4.4, applicationinsights v3.16.0, @azure/monitor-opentelemetry v1.20.0) -->
 # Azure Application Insights Implementation Reference
 
 ## Overview
@@ -13,7 +13,8 @@ Azure Application Insights is a feature of Azure Monitor that provides applicati
 | Environment | Integration | Install |
 |---|---|---|
 | Browser | Application Insights JavaScript SDK (`@microsoft/applicationinsights-web`) | `npm install @microsoft/applicationinsights-web` |
-| Node.js | Application Insights Node.js SDK (`applicationinsights`) | `npm install applicationinsights` |
+| Node.js (recommended for new apps) | Azure Monitor OpenTelemetry Distro (`@azure/monitor-opentelemetry`) | `npm install @azure/monitor-opentelemetry` |
+| Node.js (existing apps) | Application Insights Node.js SDK 3.x (`applicationinsights`) | `npm install applicationinsights` |
 | HTTP API | Track API (v2) | No SDK -- raw `fetch()` calls |
 
 ## Initialization
@@ -49,7 +50,7 @@ appInsights.trackPageView(); // Manually track the initial page view
 
 **Connection string vs instrumentation key:** Instrumentation key-based ingestion is deprecated -- support ended March 31, 2025. Always use connection strings, which include the ingestion endpoint and are required for regional endpoints. The format is: `InstrumentationKey=xxx;IngestionEndpoint=https://xxx.applicationinsights.azure.com/;LiveEndpoint=https://xxx.monitor.azure.com/`.
 
-> **Note:** Microsoft now recommends the **Azure Monitor OpenTelemetry Distro** for new Node.js applications. The classic `applicationinsights` npm package (SDK 3.x) continues to work via a compatibility shim but routes telemetry through OpenTelemetry internally. The code patterns below use the classic API, which remains supported for existing applications.
+> **Note:** The Node.js Application Insights Classic API SDK 2.x is **retired**. Microsoft recommends the **Azure Monitor OpenTelemetry Distro** (`@azure/monitor-opentelemetry`) for new applications; the `applicationinsights` 3.x package is an OpenTelemetry-based upgrade path that keeps most classic `track*` calls working through a compatibility shim (many 2.x config options and telemetry processors are unsupported). The classic-style code patterns below target `applicationinsights` 3.x for existing applications; see the Distro example for new work. In the browser, `@microsoft/applicationinsights-web` remains the supported path -- Microsoft does not expect browser monitoring to migrate to OpenTelemetry.
 
 ### Node.js
 
@@ -77,6 +78,37 @@ import * as appInsights from 'applicationinsights';
 
 appInsights.setup(process.env.APPLICATIONINSIGHTS_CONNECTION_STRING).start();
 const client = appInsights.defaultClient;
+```
+
+**Azure Monitor OpenTelemetry Distro (recommended for new Node.js apps):** Call `useAzureMonitor()` before importing anything else. Custom events go through the OpenTelemetry Logs API with the `microsoft.custom_event.name` attribute (they land in the `customEvents` table); user identity is set as `enduser.id` on the active span.
+
+```typescript
+// instrument.ts -- load before the rest of your app
+import { useAzureMonitor } from '@azure/monitor-opentelemetry';
+useAzureMonitor({
+  azureMonitorExporterOptions: {
+    connectionString: process.env.APPLICATIONINSIGHTS_CONNECTION_STRING,
+  },
+});
+```
+
+```typescript
+import { logs, SeverityNumber } from '@opentelemetry/api-logs';
+import { trace } from '@opentelemetry/api';
+
+// User context -- inside a request handler
+trace.getActiveSpan()?.setAttribute('enduser.id', 'usr_123');
+
+// Custom event
+logs.getLogger('my-app').emit({
+  body: 'form_submitted',
+  severityNumber: SeverityNumber.INFO,
+  attributes: {
+    'microsoft.custom_event.name': 'form_submitted',
+    form_id: 'rpt_789',
+    account_id: 'acc_456',
+  },
+});
 ```
 
 **Environment variable auto-detection:** If you set `APPLICATIONINSIGHTS_CONNECTION_STRING` as an environment variable, calling `appInsights.setup()` without arguments will pick it up automatically.
@@ -120,6 +152,8 @@ app.use((req, res, next) => {
 ```
 
 For multi-tenant Node.js apps where the default client's tags would be overwritten per request, use `getCorrelationContext()` or create per-request envelopes:
+
+<!-- UNVERIFIED: getCorrelationContext()/customProperties support in applicationinsights 3.x shim not confirmed in live docs as of 2026-10-01; with the OTel Distro set `enduser.id` on the active span instead -->
 
 ```javascript
 app.use((req, res, next) => {
@@ -453,14 +487,16 @@ This reference covers the essentials for integrating Application Insights as an 
 - **JavaScript SDK:** https://learn.microsoft.com/en-us/azure/azure-monitor/app/javascript-sdk
 - **JavaScript SDK Configuration:** https://learn.microsoft.com/en-us/azure/azure-monitor/app/javascript-sdk-configuration
 - **JavaScript SDK npm Package:** https://www.npmjs.com/package/@microsoft/applicationinsights-web
-- **Node.js SDK (Classic API):** https://learn.microsoft.com/en-us/azure/azure-monitor/app/classic-api
+- **Node.js SDK (Classic API, archived):** https://learn.microsoft.com/en-us/previous-versions/azure/azure-monitor/app/classic-api
+- **Azure Monitor OpenTelemetry Distro (Node.js):** https://learn.microsoft.com/en-us/azure/azure-monitor/app/opentelemetry-enable?tabs=nodejs
+- **OpenTelemetry custom events / user ID:** https://learn.microsoft.com/en-us/azure/azure-monitor/app/opentelemetry-add-modify?tabs=nodejs
 - **Node.js SDK npm Package:** https://www.npmjs.com/package/applicationinsights
-- **Node.js OpenTelemetry Migration:** https://learn.microsoft.com/en-us/azure/azure-monitor/app/opentelemetry-nodejs-migrate
+- **Node.js OpenTelemetry Migration:** https://learn.microsoft.com/en-us/azure/azure-monitor/app/migrate-to-opentelemetry?tabs=nodejs
 - **Connection Strings:** https://learn.microsoft.com/en-us/azure/azure-monitor/app/connection-strings
-- **Custom Events and Metrics:** https://learn.microsoft.com/en-us/azure/azure-monitor/app/api-custom-events-metrics
-- **User Context (setAuthenticatedUserContext):** https://learn.microsoft.com/en-us/azure/azure-monitor/app/api-custom-events-metrics#authenticated-users
+- **Custom Events and Metrics (Classic API):** https://learn.microsoft.com/en-us/previous-versions/azure/azure-monitor/app/classic-api
+- **User Context (setAuthenticatedUserContext):** https://learn.microsoft.com/en-us/previous-versions/azure/azure-monitor/app/classic-api
 - **Sampling (Classic API):** https://learn.microsoft.com/en-us/previous-versions/azure/azure-monitor/app/sampling-classic-api
 - **Sampling (OpenTelemetry):** https://learn.microsoft.com/en-us/azure/azure-monitor/app/opentelemetry-sampling
-- **KQL (Kusto Query Language):** https://learn.microsoft.com/en-us/azure/data-explorer/kusto/query/
-- **Distributed Tracing:** https://learn.microsoft.com/en-us/azure/azure-monitor/app/distributed-trace-data
-- **Track API (HTTP):** https://learn.microsoft.com/en-us/azure/azure-monitor/app/api-custom-events-metrics#trackEvent
+- **KQL (Kusto Query Language):** https://learn.microsoft.com/en-us/kusto/query/
+- **Distributed Tracing (Classic API):** https://learn.microsoft.com/en-us/previous-versions/azure/azure-monitor/app/classic-api
+- **Track API (HTTP):** https://learn.microsoft.com/en-us/previous-versions/azure/azure-monitor/app/classic-api <!-- UNVERIFIED: no current standalone Track API (v2/track) reference page found as of 2026-10-01 -->

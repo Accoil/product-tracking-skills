@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Segment docs -->
+<!-- Last verified: 2026-10-01 against Segment docs (@segment/analytics-next v1.84.x, @segment/analytics-node v3.1.x) -->
 # Segment Implementation Reference
 
 Segment is a customer data platform (CDP) that routes events to multiple destinations. Three integration paths depending on environment:
@@ -46,26 +46,30 @@ Use when you cannot install an SDK (Forge backend, edge functions, serverless wi
 
 ### Regional Endpoints
 
-Since April 2025, Segment enforces regional data routing. EU workspaces **MUST** use the EU endpoints — data sent to the wrong region is silently rejected (the API returns `200` but the data is dropped).
+Since April 3, 2025, Segment enforces regional data routing. EU workspaces **MUST** use the EU endpoints — data sent to the wrong region is silently rejected (the API returns `200` but the data is dropped).
 
 | Integration | Default (Oregon) | EU (Dublin) |
 |---|---|---|
 | HTTP API | `https://api.segment.io/v1/` | `https://events.eu1.segmentapis.com/v1/` |
-| Node.js SDK (`host`) | _(default, no config needed)_ | `https://eu1.api.segmentapis.com` |
+| Node.js SDK (`host`) | _(default, no config needed)_ | `https://events.eu1.segmentapis.com` (no `/v1`) |
 
 **Node.js EU configuration:**
 ```javascript
 const analytics = new Analytics({
   writeKey: process.env.SEGMENT_WRITE_KEY,
-  host: 'https://eu1.api.segmentapis.com'
+  host: 'https://events.eu1.segmentapis.com' // do not include /v1 for server SDKs
 });
 ```
+
+<!-- NOTE (2026-10-01): Segment's Regional Segment guide (twilio.com/docs/segment/guides/regional-segment) specifies host "https://events.eu1.segmentapis.com" for Node.js/Python/Java; the Analytics Node library page still shows "https://eu1.api.segmentapis.com". Following the regional guide, which governs enforcement. -->
+
+Analytics.js (browser) picks up the correct regional endpoint from source settings automatically — no manual config needed.
 
 **Warning:** There is no error signal when data is sent to the wrong region. Verify your workspace region in Segment Settings → Workspace before configuring endpoints.
 
 ### Authentication
 
-Simplest: include `writeKey` in the JSON body. Alternative: Basic Auth header with write key as username and empty password — `Authorization: Basic <base64(writeKey:)>`.
+Simplest: include `writeKey` in the JSON body. Alternative: Basic Auth header with write key as username and empty password — `Authorization: Basic <base64(writeKey:)>`. Sources with OAuth 2.0 enabled use `Authorization: Bearer <access_token>` plus `writeKey` in the body.
 
 All requests require `Content-Type: application/json`.
 
@@ -391,77 +395,9 @@ analytics.debug(true); // logs all calls to console
 - `400` — payload too large, invalid JSON, or missing required fields
 - `429` — rate limited; check `Retry-After` header
 
-## Group Context on Track Calls
+## Group Attribution
 
-Segment's `group()` call associates a user with a group, but it does **not** automatically attach group context to subsequent `track()` calls. To attribute an event to a specific group, you must include the `groupId` in the track call's `context` object.
-
-### Why This Matters
-
-In B2B products with hierarchical groups (account > workspace > project), each event belongs to a specific group level. Without explicit group context on the track call, downstream tools cannot determine which group the event should be attributed to.
-
-### Pattern: context.groupId
-
-**Browser:**
-```javascript
-analytics.track('task.completed', {
-  task_id: 'task_456'
-}, {
-  context: { groupId: 'ws_789' }  // Attributes event to this workspace
-});
-```
-
-**Node.js:**
-```javascript
-analytics.track({
-  userId: 'usr_123',
-  event: 'task.completed',
-  properties: {
-    task_id: 'task_456'
-  },
-  context: { groupId: 'ws_789' }  // Attributes event to this workspace
-});
-```
-
-**HTTP API:**
-```json
-POST /v1/track
-{
-  "userId": "usr_123",
-  "event": "task.completed",
-  "properties": {
-    "task_id": "task_456"
-  },
-  "context": {
-    "groupId": "ws_789"
-  },
-  "writeKey": "YOUR_WRITE_KEY"
-}
-```
-
-### Events at Different Group Levels
-
-The tracking plan assigns each event to a group level. The track call must carry the correct group ID for that level:
-
-```javascript
-// Project-level event
-analytics.track('task.completed', { task_id: 'task_456' }, {
-  context: { groupId: 'proj_123' }
-});
-
-// Workspace-level event
-analytics.track('workspace.settings_updated', { setting: 'notifications' }, {
-  context: { groupId: 'ws_789' }
-});
-
-// Account-level event
-analytics.track('plan.upgraded', { from_plan: 'free', to_plan: 'pro' }, {
-  context: { groupId: 'acc_456' }
-});
-```
-
-### Every Group Level Needs a group() Call
-
-Before referencing a group ID in track calls, that group must be established via a `group()` call. For hierarchical products, issue a `group()` call for **every level** in the hierarchy:
+Segment's `group()` call is what associates a user with a group — destinations build account/group data from it. Send a `group()` call for **every level** in the hierarchy so each group exists with its traits:
 
 ```javascript
 // 1. Establish account
@@ -483,14 +419,17 @@ analytics.group('proj_123', {
   group_type: 'project',
   parent_group_id: 'ws_789'
 });
-
-// Now track calls can reference any of these group IDs
-analytics.track('task.completed', { task_id: 'task_456' }, {
-  context: { groupId: 'proj_123' }
-});
 ```
 
-**Note:** Segment's native `group()` only associates one group at a time per user. The `context.groupId` on track calls is what downstream tools (Accoil, Amplitude, Mixpanel) use to attribute the event to the correct group. Some downstream tools (like Accoil) support hierarchical rollups via `parent_group_id` traits on group calls.
+Track calls stay plain (event name + properties). Don't add a blanket `context: { groupId }` to every track call: Segment's spec lists `context.groupId` as an optional field, but it only has an effect in destinations that are mapped to read it. Hierarchical rollups via `parent_group_id` depend on the destination supporting them.
+
+### Per-Event Group Attribution (destination-specific)
+
+Where a destination supports attributing a single event to a group, use that destination's documented mechanism:
+
+- **Amplitude (Classic):** event-level groups via `integrations: { Amplitude: { groups: { workspace: 'ws_789' } } }` in the track call's options. Groups require Amplitude's Accounts add-on.
+- **Mixpanel (Actions):** the Track mapping's **Group ID** field defaults to `context.groupId` when the group key is `$group_id`. For a custom group key, send the key as an event property (e.g. `{ workspace_id: 'ws_789' }`). Mixpanel (Classic) cloud-mode: send the group key as an event property.
+- **PostHog:** Segment's group calls create the PostHog group type `segment_group`. For other group types, add `$groups: { workspace: 'ws_789' }` to the track call's properties.
 
 ## Common Pitfalls
 
@@ -498,7 +437,8 @@ analytics.track('task.completed', { task_id: 'task_456' }, {
 2. **Missing group calls** — B2B tools lose account-level insights.
 3. **PII in event properties** — put PII in user traits (identify), not event properties. Properties should be IDs and metadata.
 4. **Calling identify too often** — once per session is enough. Excessive calls cause issues with some destinations.
-5. **Not flushing on exit** — browser SDK batches calls. Analytics.js handles this automatically with `beforeunload`, but if you have a custom SPA teardown, call `analytics.flush()`.
+5. **Not flushing on exit** — with batching enabled, Analytics.js attempts to flush the queue on `beforeunload` using `fetch` with `keepalive` (64 KB limit), but delivery isn't guaranteed. Keep batch `size`/`timeout` small if exit events matter.
+<!-- UNVERIFIED: a public analytics.flush() method is not documented on the Analytics.js page as of 2026-10-01 -->
 6. **Server-side without userId** — unlike browser SDK, there's no implicit user. Every call needs explicit `userId`.
 
 ## Further Documentation

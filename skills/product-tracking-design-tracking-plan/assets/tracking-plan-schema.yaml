@@ -342,11 +342,11 @@ implementation_notes:
   
   # Group hierarchy
   - "Define groups with parent_group_id to establish hierarchy"
-  - "Attribute events to the most specific group level (context.groupId for Accoil)"
+  - "Attribute events to the most specific group level (Accoil: via user membership — no group context on track calls)"
   - "Analytics tools roll metrics up automatically — don't double-track"
   
   # Platform-specific
-  - "Accoil: Use context.groupId (capital I) for event attribution"
+  - "Accoil: Track calls carry only userId + event name — no context.groupId; attribution via identify/group() membership, rollup via parent_group_id; no variants in event names"
   - "Amplitude: Use groups property in integrations object"
   - "Mixpanel: Use $groups property on events"
   - "Segment: Only supports user-to-group, not event-to-group attribution"

@@ -1,3 +1,4 @@
+<!-- Last verified: 2026-10-01 against Mixpanel docs -->
 # Mixpanel Implementation Guide
 
 ## Overview
@@ -147,7 +148,7 @@ mixpanel.track('Checkout', {
 
 ## B2B / Group Analytics
 
-Group Analytics is a paid add-on. Enables account-level analysis.
+Group Analytics is a paid add-on for Growth and Enterprise plans (up to 3 group keys; 6 on Enterprise for an additional fee). Enables account-level analysis.
 
 ### Associate User with Group
 ```typescript
@@ -285,7 +286,7 @@ mixpanel.init(token, {
 
 // Exclude specific elements
 // Add class 'mp-no-track' to exclude from tracking
-// Add class 'mp-exclude' to exclude from all tracking (including as parent)
+// Add class 'mp-sensitive' to also exclude it from the $elements property of other events
 ```
 
 ## Common Pitfalls

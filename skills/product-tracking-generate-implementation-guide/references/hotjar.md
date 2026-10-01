@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Hotjar docs -->
+<!-- Last verified: 2026-10-01 against Hotjar / Contentsquare help center docs (@hotjar/browser v1.0.9) -->
 # Hotjar Implementation Reference
 
 ## Overview
@@ -6,6 +6,8 @@
 Hotjar is a session recording, heatmap, and user feedback tool. It provides qualitative behavioral data — watching what users actually do on the page — to supplement quantitative product analytics. Hotjar is proprietary and cloud-only.
 
 **Category: Session / Behavior Tool.** Hotjar supplements product analytics with qualitative data. It is not a replacement for event tracking, funnels, or account-level analytics.
+
+> **Contentsquare migration (2026):** Hotjar is part of the Contentsquare Group and existing Hotjar accounts are being moved to Contentsquare Growth accounts. Per Contentsquare's support docs, customers get a 30-day period in which the existing Hotjar tracking code collects data into both Hotjar and Contentsquare; after that the account switches to Contentsquare automatically unless the Account Owner opts out, Hotjar becomes read-only, and Hotjar data is later permanently deleted (export anything you need). The Hotjar tracking code and `hj('identify', ...)` keep working (Contentsquare's own Identify API reference still uses `hj('identify', ...)`). Contentsquare's native Events API is `window._uxa.push(['event', 'event_name'])` with the same naming rules. For new projects, confirm with the customer whether they are on Hotjar or Contentsquare before choosing the event call.
 
 ## Integration
 
@@ -127,10 +129,12 @@ Hotjar.identify('usr_123', {
 |---|---|
 | Max attributes per site | 100 |
 | Attribute name max length | 50 characters |
-| String attribute value max length | 255 characters <!-- UNVERIFIED: 255 not explicitly confirmed in current docs; Hotjar docs confirm the 50-char attribute name limit but do not prominently state the value length limit --> |
+| String attribute value max length | 200 characters (case insensitive, UTF-8) |
 | User ID max length | 255 characters <!-- UNVERIFIED: not explicitly stated in current Hotjar docs --> |
 
-Attribute values must be strings, numbers, or booleans. Nested objects and arrays are not supported.
+Attribute values must be strings, numbers, booleans, or ISO-8601 date strings (use `toISOString()`). Nested objects and arrays are not supported. Email addresses may only be sent in the `email` attribute -- any other string attribute containing an email is rejected. If the user ID is unknown, pass `null` and send no PII. Call `identify` before `event` when combining them for survey targeting.
+
+If you might call `hj()` before the tracking code has executed, add the queue stub first: `window.hj=window.hj||function(){(hj.q=hj.q||[]).push(arguments)};`
 
 **When to call:** On login, and on every page load where the user is known (Hotjar does not persist identity across page loads by default in all configurations).
 
@@ -159,7 +163,7 @@ hj('event', 'feature_first_used');
 hj('event', 'plan_upgraded');
 ```
 
-**Event naming:** Event names are case-sensitive strings. Use `snake_case` for consistency with product analytics conventions. Maximum length is 250 characters. Allowed characters: alphanumeric (a-z, A-Z, 0-9), underscores (`_`), dashes (`-`), spaces, periods (`.`), colons (`:`), pipes (`|`), and forward slashes (`/`). There is a limit of 10,000 unique events per Hotjar site, and only the first 50 unique events in a single session are searchable by filters.
+**Event naming:** Event names are case-sensitive strings. Use `snake_case` for consistency with product analytics conventions. Maximum length is 250 characters. Allowed characters: alphanumeric (a-z, A-Z, 0-9), underscores (`_`), dashes (`-`), spaces, periods (`.`), colons (`:`), pipes (`|`), and forward slashes (`/`). There is a limit of 10,000 unique events per Hotjar site, and only the first 50 unique events in a single session are searchable by filters. Event properties are not supported, and event names must not contain PII, email or IP addresses, or numbers with 9+ digits.
 
 ### Triggering Surveys via JavaScript
 
@@ -268,7 +272,7 @@ In the Hotjar dashboard, configure URL exclusion rules to prevent recording on s
 
 ### Opt-Out Users Programmatically
 
-<!-- UNVERIFIED: hj('optOut') is not documented in current Hotjar API reference pages. Hotjar's documented opt-out mechanism is the user-facing opt-out page (https://www.hotjar.com/policies/do-not-track/) and browser Do Not Track settings. The method below may still work but is not confirmed in current docs. -->
+<!-- UNVERIFIED: hj('optOut') is not documented in current Hotjar API reference pages. Hotjar's documented opt-out mechanism is the user-facing opt-out page (https://www.hotjar.com/policies/do-not-track/, which now redirects to the Contentsquare Trust Center) and browser Do Not Track settings. The method below may still work but is not confirmed in current docs. -->
 
 ```javascript
 // Disable all Hotjar tracking for this user
@@ -375,6 +379,10 @@ In DevTools Network tab, look for requests to:
 2. **Events:** Use the event filter in Recordings to verify events are firing.
 3. **Identify:** Filter recordings by User ID to verify identity tagging.
 
+### Debug Mode
+
+Append `?hjDebug=1` to the page URL and open the browser console to see each processed command (e.g., `Processing command: event example_action`).
+
 ### @hotjar/browser Debug
 
 ```typescript
@@ -396,3 +404,6 @@ This reference covers the essentials for session recording and behavior tracking
 - **Privacy and Data Safety:** https://help.hotjar.com/hc/en-us/articles/36819972898193-Data-Safety-Privacy-Security
 - **Privacy FAQs (GDPR):** https://help.hotjar.com/hc/en-us/articles/36820004397713-Privacy-FAQs
 - **@hotjar/browser npm Package:** https://www.npmjs.com/package/@hotjar/browser
+- **Hotjar customers: your new Contentsquare account:** https://support.contentsquare.com/hc/en-us/articles/49355500134545-Hotjar-customers-your-new-Contentsquare-account
+- **Contentsquare Identify API (surveys):** https://support.contentsquare.com/hc/en-us/articles/37271888440337-Identify-API-reference-for-surveys
+- **Contentsquare Events API:** https://support.contentsquare.com/hc/en-us/articles/37271882728593-Events-API-reference

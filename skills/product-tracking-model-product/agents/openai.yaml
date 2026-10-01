@@ -1,0 +1,9 @@
+interface:
+  display_name: "Model product"
+  short_description: "Map users, accounts and value flow"
+  brand_color: "#000000"
+  default_prompt: "Model this product for analytics: users, accounts, entities and value flow."
+
+policy:
+  products:
+    - CODEX

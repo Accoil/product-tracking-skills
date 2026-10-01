@@ -327,7 +327,7 @@ import posthog from 'posthog-js';
 
 // Initialize
 posthog.init('YOUR_API_KEY', {
-  api_host: 'https://app.posthog.com',  // or your self-hosted URL
+  api_host: 'https://us.i.posthog.com',  // EU: 'https://eu.i.posthog.com', or your self-hosted URL
   autocapture: true,
   capture_pageview: true,
   capture_pageleave: true,
@@ -377,7 +377,7 @@ npm install posthog-node
 import { PostHog } from 'posthog-node';
 
 const posthog = new PostHog('YOUR_API_KEY', {
-  host: 'https://app.posthog.com',  // or your self-hosted URL
+  host: 'https://us.i.posthog.com',  // EU: 'https://eu.i.posthog.com', or your self-hosted URL
   flushAt: 20,
   flushInterval: 10000
 });
@@ -436,50 +436,101 @@ await posthog.shutdown();
 
 ## Accoil
 
-B2B-first engagement analytics with account-level insights.
+B2B-first engagement analytics with account-level insights. Three integration methods: tracker.js (browser), Direct API v2 (server), or as a Segment destination.
 
-### Browser SDK
+### Browser SDK (tracker.js)
 
-```bash
-npm install @accoil/tracker
+Zero-dependency library loaded from CDN (no npm package). Add to your top-level template:
+
+```html
+<script type="text/javascript">
+(function() {
+  var accoil = window.accoil = window.accoil || {q: []};
+  var calls = ['load', 'identify', 'group', 'track'];
+  for (var i = 0; i < calls.length; i++) (function(call) {
+    accoil[call] = function() { accoil.q.push([call, arguments]); };
+  })(calls[i]);
+  var s = document.createElement('script'); s.src = 'https://cdn.accoil.com/tracker.js'; s.async = true;
+  var f = document.getElementsByTagName('script')[0]; f.parentNode.insertBefore(s, f);
+})();
+</script>
+<script type="text/javascript">
+  accoil.load("YOUR_API_KEY");
+</script>
 ```
+
+```javascript
+// Identify user (call on every page load, before tracking)
+accoil.identify("usr_123", {
+  email: "jane@example.com",
+  name: "Jane Doe",
+  created_at: "2024-01-15T00:00:00Z",
+  role: "admin"
+});
+
+// Group (account) — call when accounts are created or traits change
+accoil.group("acc_456", {
+  name: "Acme Corp",
+  status: "active",
+  mrr: 500000, // $5,000 in cents — MRR is specified in cents, not dollars
+  created_at: "2023-06-01T00:00:00Z"
+});
+
+// Track event — event name only, no properties and no group context.
+// Account attribution comes from the user's membership (identify/group).
+// Don't encode variants in the name (e.g. not 'Report_Exported_PDF').
+accoil.track("Report_Exported");
+```
+
+### Server-Side (Direct API v2)
+
+REST API at `https://in.accoil.com`, authenticated with `Authorization: Basic YOUR_API_KEY`. Returns 202 and processes asynchronously — including key validation, so an invalid key still returns 202.
 
 ```typescript
-import { Accoil } from '@accoil/tracker';
+const ACCOIL_API_KEY = process.env.ACCOIL_API_KEY!;
+const ACCOIL_BASE = 'https://in.accoil.com';
 
-// Initialize
-const accoil = new Accoil({
-  appId: 'YOUR_APP_ID'
+async function accoilPost(path: string, body: object) {
+  await fetch(`${ACCOIL_BASE}${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Basic ${ACCOIL_API_KEY}`,
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+// Identify (userId required; groupId associates the user with an account)
+await accoilPost('/v2/identify', {
+  userId: 'usr_123',
+  groupId: 'acc_456',
+  traits: { email: 'jane@example.com', name: 'Jane Doe', created_at: '2024-01-15T00:00:00Z' }
 });
 
-// Identify user and account together
-accoil.identify({
-  userId: 'user-123',
-  accountId: 'account-456',
-  traits: {
-    email: 'user@example.com',
-    role: 'admin'
-  },
-  accountTraits: {
-    name: 'Acme Inc',
-    plan: 'enterprise',
-    mrr: 999
-  }
+// Group (groupId required; userId optional — omit for account-only trait updates)
+await accoilPost('/v2/group', {
+  groupId: 'acc_456',
+  userId: 'usr_123',
+  traits: { name: 'Acme Corp', created_at: '2023-06-01T00:00:00Z', status: 'paid', mrr: 500000 }
 });
 
-// Track event (auto-includes account context)
-accoil.track('Feature Used', {
-  feature: 'export',
-  format: 'csv'
-});
+// Track (userId + event only — no properties accepted)
+await accoilPost('/v2/track', { userId: 'usr_123', event: 'Report_Exported' });
 ```
 
+### Via Segment
+
+Add the **Accoil Analytics** destination in Segment; existing `identify`, `group`, and `track` calls flow through. Segment `page`/`screen` calls arrive as track events. Track properties are passed but Accoil stores only the event name.
+
 ### Key Accoil Concepts
-- **appId**: Your Accoil application identifier
-- **userId**: Individual user identifier
-- **accountId**: B2B account/organization identifier
-- **Engagement Scoring**: 0-100 normalized engagement scores
-- **Account-First**: Events automatically roll up to account level
+- **API key**: Used by `accoil.load()` (browser) and as `Authorization: Basic` (Direct API)
+- **userId**: Stable user identifier (database ID, not email)
+- **groupId**: B2B account/organization identifier, set via `group()`
+- **Name-only tracking**: Track calls store the event name only — no properties, no variants in names
+- **MRR in cents**: `mrr` trait is an integer in cents (`500000` = $5,000)
+- **Engagement Scoring**: Engagement scores calculated at the account level
+- **Account-First**: Events attributed to accounts via user membership (`identify` with `groupId` / `group()`)
 
 ---
 
@@ -574,11 +625,12 @@ Product Tracking – Instrument New Feature
 For B2B apps, always include account context:
 
 ```typescript
-// Segment
+// Segment — group() associates the user with the account; there is no generic
+// per-event group option. Use the destination's mechanism, e.g. Amplitude (Classic):
 analytics.track('Feature Used', {
   feature: 'export'
 }, {
-  groupId: 'account-456'  // Context grouping
+  integrations: { Amplitude: { groups: { company: 'account-456' } } }
 });
 
 // Amplitude
@@ -637,10 +689,10 @@ Most B2B products have structure beyond "users and accounts." Support for nested
 
 | Platform | Event-Level Groups | Hierarchical Groups |
 |----------|-------------------|---------------------|
-| **Accoil** | ✓ `context.groupId` | ✓ Full via `parent_group_id` |
+| **Accoil** | ✓ via user membership (no group context on track) | ✓ Full via `parent_group_id` |
 | **Amplitude** | ✓ `groups` property | ⚠️ Limited — no native hierarchy |
-| **Mixpanel** | ✓ `$groups` property | ⚠️ Limited — no native hierarchy |
-| **Segment** | ✗ User-level only | ✗ Not supported |
+| **Mixpanel** | ✓ group key as event property | ⚠️ Limited — no native hierarchy |
+| **Segment** | ✗ User-level only (`group()`); per-event via destination-specific options | ✗ Not supported |
 | **PostHog** | ✓ `groups` property | ⚠️ Max 5 group types |
 
 ### Defining Hierarchical Groups
@@ -674,14 +726,10 @@ analytics.group('proj_123', {
 Track at the most specific group level:
 
 ```typescript
-// Accoil — use context.groupId (capital I)
-analytics.track('Task Completed', {
-  task_id: 'task_456'
-}, {
-  context: {
-    groupId: 'proj_123'  // Most specific level
-  }
-});
+// Accoil — no group context on track calls; event name only.
+// Attribution comes from user membership (identify with groupId / group()),
+// rollup from parent_group_id traits.
+accoil.track('Task_Completed');
 
 // Amplitude — use groups in integrations
 analytics.track('Task Completed', {

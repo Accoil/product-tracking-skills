@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Simple Analytics docs -->
+<!-- Last verified: 2026-10-01 against Simple Analytics docs -->
 
 # Simple Analytics Implementation Reference
 
@@ -73,8 +73,8 @@ Page views are tracked automatically on page load and on SPA route changes (via 
 - Language (browser language)
 - Time on page (excludes time when browser tab is hidden)
 - Scroll depth (recorded in 5% increments)
-- Session ID (connects pages and events within one session)
-- Page ID (connects events on the same page)
+- Page load ID (`page_load_id`, legacy field `session_id`) -- a random in-memory ID linking events and page views sent during one page load; not persistent across reloads
+- Page ID (connects events on the same page; resets on every page)
 - Bot detection (bots are filtered out via user agent analysis)
 
 **Not auto-collected:** user identity, click tracking, form interactions, IP address (never collected or stored), detailed query parameters or fragments.
@@ -231,9 +231,23 @@ sa_event('outbound_link_to_affiliate', function() {
 
 Events can be submitted from server-side or mobile applications via a JSON POST:
 
-**Endpoint:** `https://queue.simpleanalyticscdn.com/events`
+**Endpoint:** `POST https://queue.simpleanalyticscdn.com/events`
 
-This supports both event and page view submissions with metadata. See the server-side documentation for payload format.
+**Required header:** `Content-Type: application/json`
+
+**Required fields:** `type` (`event` or `pageview`), `hostname`, `event` (event name, or `pageview`), `ua` (User-Agent). Page views also require `path`. `metadata` is optional.
+
+```json
+{
+  "type": "event",
+  "hostname": "app.example.com",
+  "event": "report_exported",
+  "metadata": { "report_type": "standard" },
+  "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ..."
+}
+```
+
+Avoid default User-Agents from HTTP libraries (e.g., containing `bot`, `crawl`, `python-requests/...`, `curl/...`) -- these are classified as robots and dropped.
 
 ## Limits
 
@@ -259,7 +273,7 @@ This supports both event and page view submissions with metadata. See the server
 
 3. **No site ID in the script tag** -- Simple Analytics identifies your site by the page hostname. If you test on `localhost` or a staging domain, data goes to the wrong site (or nowhere). Use `data-hostname="yourdomain.com"` to override when testing locally. Alternatively, use the dev script: `latest.dev.js`.
 
-4. **Expecting user-level analytics** -- Simple Analytics provides aggregate metrics with session-level grouping. You cannot filter events by user, see individual user journeys, or identify users. If you need user-level data, use a product analytics tool.
+4. **Expecting user-level analytics** -- Simple Analytics provides aggregate metrics; its `page_load_id` only links events within a single page load. You cannot filter events by user, see individual user journeys, or identify users. If you need user-level data, use a product analytics tool.
 
 5. **Hash routing not enabled** -- For apps using hash-based routing (e.g., `/#/page`), you must add `data-mode="hash"` to the script tag. Without it, all hash route changes are invisible.
 

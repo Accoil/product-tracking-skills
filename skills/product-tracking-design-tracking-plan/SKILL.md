@@ -122,7 +122,7 @@ Record the decision in the tracking plan's `meta:` block as `pii_policy: none | 
 Record the decision in the tracking plan's `meta:` block as `internal_user_policy`. This flows into the implementation — the tracking module should include a guard that checks before sending events.
 
 **Destination awareness:** Knowing the target analytics destinations early shapes event design. For example:
-- **Accoil** — does not store event properties; event names must be self-descriptive (e.g., `report.created_from_template` not `report.created` with `{source: 'template'}`)
+- **Accoil** — does not store event properties, but do NOT encode variants in event names (`report.exported`, not `report.exported_pdf`; no `report.created_from_template` splits). Track the action once; put descriptive context on user/account traits. Track calls carry no group context — attribution comes from user membership via identify/group()
 - **Volume-billed platforms** (Amplitude, Mixpanel) — fewer events = lower cost; prefer properties over events
 - **CDPs** (Segment, RudderStack) — can route to multiple destinations; design once, deliver everywhere
 - **Multiple destinations** — if the plan targets 2+ destinations, recommend a CDP as the ingestion layer
@@ -399,7 +399,7 @@ If no current state exists, note: "Delta requires the **product-tracking-audit-c
 
 3. **Less is more — and cheaper.** Start with fewer events. It's easy to add later, painful to remove. If you're unsure whether to include an event, don't. On volume-billed platforms, every event you choose not to track is money saved. Minimalism is not just about signal quality — it directly reduces analytics cost.
 
-4. **Properties over events — unless the destination doesn't support them.** `report.created` with `{ report_type: 'template' }` beats `template_report.created` — UNLESS the destination stores event names only (e.g., Accoil). In that case, encode distinctions in event names: `report.created_from_template`. Check destination constraints from Step 2 before applying this rule. One event with a property is almost always better than two events. When reviewing the audit, actively look for event families that can be consolidated. Call this out as both a design improvement and a cost saving.
+4. **Properties over events — unless the destination doesn't support them.** `report.created` with `{ report_type: 'template' }` beats `template_report.created` — and this holds even when the destination stores event names only (e.g., Accoil). Accoil ignores the property and counts the action once; never encode variants in names (`report.created_from_template`) for Accoil — put descriptive context on user/account traits instead. One event with a property is almost always better than two events. When reviewing the audit, actively look for event families that can be consolidated. Call this out as both a design improvement and a cost saving.
 
 5. **Templates are invisible.** The user doesn't need to know you started from a template. The output should feel bespoke.
 

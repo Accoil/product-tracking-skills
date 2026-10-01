@@ -1,3 +1,4 @@
+<!-- Last verified: 2026-10-01 against Amplitude docs (Browser SDK 2.47.x, Node SDK 1.5.x) -->
 # Amplitude Implementation Guide
 
 ## Overview
@@ -27,8 +28,10 @@ npm install @amplitude/analytics-browser
 ```typescript
 import * as amplitude from '@amplitude/analytics-browser';
 
+// Note: `defaultTracking` was deprecated in Browser SDK v2.10.0; use `autocapture` instead.
+// When auditing, `defaultTracking` in a codebase indicates an older SDK setup.
 amplitude.init(process.env.AMPLITUDE_API_KEY!, {
-  defaultTracking: {
+  autocapture: {
     sessions: true,        // Track session start/end
     pageViews: true,       // Track page views automatically
     formInteractions: true, // Track form starts/submits
@@ -59,6 +62,9 @@ amplitude.identify(identify);
 - When user properties change
 
 ### Group (Account Context)
+
+**Note:** Groups (Accounts) is a paid add-on, available on Plus, Growth, and Enterprise plans (not Free).
+
 ```typescript
 amplitude.setGroup('account', 'acc_456');
 
@@ -167,15 +173,14 @@ Track billing events server-side for accuracy:
 
 ```typescript
 // Server-side
-import { Amplitude } from '@amplitude/analytics-node';
+import { init, track } from '@amplitude/analytics-node';
 
-const amplitude = new Amplitude(process.env.AMPLITUDE_API_KEY!);
+init(process.env.AMPLITUDE_API_KEY!);
 
-amplitude.track('plan.upgraded', {
-  user_id: 'usr_123',
+track('plan.upgraded', {
   from_plan: 'free',
   to_plan: 'pro'
-});
+}, { user_id: 'usr_123' });
 ```
 
 ## Debugging

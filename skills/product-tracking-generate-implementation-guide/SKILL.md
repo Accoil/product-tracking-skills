@@ -4,8 +4,8 @@ description: >
   Translate a tracking plan into an SDK-specific instrumentation guide. Shows how to
   make identify, group, and track calls using the target analytics SDK with real
   template code, architecture guidance, and constraint documentation. Outputs
-  .telemetry/instrument.md. Covers 24 analytics destinations across product analytics,
-  CDPs, web analytics, error monitoring, feature flags, and session tools. Use when
+  .telemetry/instrument.md. Covers 25 analytics destinations across product analytics,
+  CDPs, product adoption, web analytics, error monitoring, feature flags, and session tools. Use when
   the user has a tracking plan and needs to know how to implement it with a specific
   SDK like Segment, Amplitude, Mixpanel, PostHog, Accoil, Google Analytics, Sentry,
   LaunchDarkly, or via generic HTTP POST. Also use when user asks 'create instrumentation
@@ -36,6 +36,7 @@ Read the matching destination reference before producing anything. References ar
 ### B2B Engagement Platforms
 
 - Accoil: [references/accoil.md](references/accoil.md)
+- CustomerScore.io: [references/customerscore.md](references/customerscore.md)
 - Intercom: [references/intercom.md](references/intercom.md)
 - Journy: [references/journy.md](references/journy.md)
 
@@ -46,7 +47,6 @@ Read the matching destination reference before producing anything. References ar
 - Plausible: [references/plausible.md](references/plausible.md)
 - Fathom: [references/fathom.md](references/fathom.md)
 - Simple Analytics: [references/simple-analytics.md](references/simple-analytics.md)
-- Beam Analytics: [references/beam-analytics.md](references/beam-analytics.md)
 - Microanalytics: [references/microanalytics.md](references/microanalytics.md)
 - Cabin (WithCabin): [references/withcabin.md](references/withcabin.md)
 - Cloudflare Web Analytics: [references/cloudflare-web-analytics.md](references/cloudflare-web-analytics.md)
@@ -62,10 +62,13 @@ Read the matching destination reference before producing anything. References ar
 - LaunchDarkly: [references/launchdarkly.md](references/launchdarkly.md)
 - Statsig: [references/statsig.md](references/statsig.md)
 
+### Product Adoption Platforms
+
+- Userpilot: [references/userpilot.md](references/userpilot.md)
+
 ### Session & Behavior Tools
 
 - HotJar: [references/hotjar.md](references/hotjar.md)
-- UserPilot: [references/userpilot.md](references/userpilot.md)
 
 ### Tag Management
 
@@ -189,13 +192,13 @@ How to track events at different group levels in this SDK. Two critical requirem
 
 **a. Every group level needs a group() call.** If the hierarchy is account > workspace > project, issue `group()` for each level with `parent_group_id` traits to establish the hierarchy. Groups must exist before events reference them.
 
-**b. Every track() call needs group context.** The tracking plan assigns each event a `group_level`. The track call must include the group ID for that level. Show the SDK-specific pattern:
+**b. Per-event group attribution is destination-specific.** The tracking plan assigns each event a `group_level`. Where the destination supports attributing a single event to a group, show its documented pattern:
 
-- **Segment:** `context: { groupId: 'proj_123' }` in the track call's options object.
-- **Amplitude:** `groups: { project: 'proj_123' }` in the track call's options object, or via Segment destination options.
-- **Mixpanel:** `$groups: { project: 'proj_123' }` as a property in the track call.
+- **Segment / RudderStack:** `group()` per level establishes membership. For per-event groups, use the downstream destination's option (e.g. `integrations: { Amplitude: { groups: { project: 'proj_123' } } }`). `context.groupId` is an optional Segment spec field that only matters where a destination reads it (e.g. Mixpanel Actions); don't rely on it generally.
+- **Amplitude:** `groups: { project: 'proj_123' }` in the track call's options object.
+- **Mixpanel:** send the group key as an event property (e.g. `project_id: 'proj_123'`, where `project_id` is a group key configured in Mixpanel).
 - **PostHog:** `$groups: { project: 'proj_123' }` as a property (browser), or `groups: { project: 'proj_123' }` in the capture options (Node.js).
-- **Accoil:** `context: { groupId: 'proj_123' }` on the track call (tracker.js, Direct API, or via Segment).
+- **Accoil (exception):** no group context on the track call — Accoil track calls carry only `userId` and the event name. Attribution comes from user membership (`identify()` with `groupId`, `group()` calls) and rollup from `parent_group_id` traits. Show `group()` membership calls per level instead of event context.
 
 Also document:
 - How the SDK associates events with groups (automatic vs explicit)

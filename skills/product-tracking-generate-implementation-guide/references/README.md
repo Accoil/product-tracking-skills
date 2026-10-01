@@ -72,12 +72,13 @@ After adding a reference file, add it to the Reference Index in [`../SKILL.md`](
 |---|---|---|
 | Product Analytics | Full | amplitude, mixpanel, posthog |
 | CDPs | Full | segment, rudderstack |
-| B2B Engagement | Full | accoil, journy |
+| B2B Engagement | Full | accoil, customerscore, journy |
 | Full-Stack Analytics | Partial | google-analytics, usermaven |
-| Web Analytics | Minimal | plausible, fathom, simple-analytics, beam-analytics, microanalytics, withcabin, cloudflare-web-analytics |
+| Web Analytics | Minimal | plausible, fathom, simple-analytics, microanalytics, withcabin, cloudflare-web-analytics |
 | Error / Performance | None | sentry, new-relic, azure-application-insights |
 | Feature Flags | Partial | launchdarkly, statsig |
-| Session / Behavior | Minimal | hotjar, userpilot |
+| Product Adoption / Digital Adoption | Full | userpilot |
+| Session / Behavior | Minimal | hotjar |
 | Tag Management | None | google-tag-manager |
 
 **B2B Fit** indicates how well the tool maps to the standard identify → group → track model:

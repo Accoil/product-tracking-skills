@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Sentry docs (SDK v10.42.0) -->
+<!-- Last verified: 2026-10-01 against Sentry docs (SDK v11.1.0) -->
 # Sentry Implementation Reference
 
 ## Overview
@@ -8,7 +8,7 @@ Sentry is an error and performance monitoring platform. It is NOT a product anal
 **Category:** Error / Performance Monitoring
 **B2B Fit:** None -- Sentry has no concept of accounts, groups, event funnels, or retention analysis. It tracks errors and performance, not product usage.
 
-> **Version note:** The Sentry JavaScript SDK is currently at **v10.42.0** (March 2026). All core APIs documented here (`setUser`, `addBreadcrumb`, `captureException`, `captureMessage`, `startSpan`, `init`) remain stable across v8, v9, and v10. The v10 release focused on upgrading OpenTelemetry dependencies to v2 with minimal breaking changes. Key v10 changes: `enableLogs` and `beforeSendLog` moved from `_experiments` to top-level init options; FID web vital replaced by INP; `sendDefaultPii` now controls IP address inference; `BaseClient` removed (use `Client`); `hasTracingEnabled` removed (use `hasSpansEnabled`).
+> **Version note:** The Sentry JavaScript SDK is currently at **v11.1.0** (September 2026). All core APIs documented here (`setUser`, `addBreadcrumb`, `captureException`, `captureMessage`, `startSpan`, `init`) remain stable across v8-v11. Key v11 changes: `sendDefaultPii` is deprecated and replaced by `dataCollection` (per-category control; **unset `dataCollection` now collects user info, cookies, headers and bodies by default**); `enableLogs` removed -- logs are sent whenever you call `Sentry.logger.*` (on by default since v10.71.0); spans are streamed by default (`traceLifecycle: 'stream'`, no transactions -- use `traceLifecycle: 'static'` for the old behavior); scope `tags`/`extra` are no longer applied to spans; `captureMessage()` attaches stack traces by default; Node.js 20.19.0+ required; Safari 14 dropped.
 
 ## SDK Options
 
@@ -30,7 +30,7 @@ Sentry.init({
   dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0',
   environment: process.env.NODE_ENV,
   release: 'my-app@1.2.3',
-  sendDefaultPii: true,              // Controls IP address inference (v10+)
+  dataCollection: { userInfo: true }, // Replaces deprecated sendDefaultPii (v11); controls IP inference
 
   // Performance monitoring -- sample rate for transactions
   tracesSampleRate: 0.1,             // 10% of transactions
@@ -40,8 +40,7 @@ Sentry.init({
   replaysSessionSampleRate: 0.1,     // 10% of sessions
   replaysOnErrorSampleRate: 1.0,     // 100% of sessions with errors
 
-  // Structured logging (optional)
-  enableLogs: true,                  // Top-level in v10 (was _experiments in v9)
+  // Structured logging: no flag needed in v11 -- logs are sent when you call Sentry.logger.*
 });
 ```
 
@@ -57,14 +56,13 @@ Sentry.init({
   dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0',
   environment: process.env.NODE_ENV,
   release: 'my-app@1.2.3',
-  sendDefaultPii: true,
+  dataCollection: { userInfo: true },
   integrations: [
     Sentry.browserTracingIntegration(),
     Sentry.replayIntegration(),
   ],
   tracesSampleRate: 0.1,
   tracePropagationTargets: ['localhost', /^https:\/\/yourserver\.io\/api/],
-  enableLogs: true,
 });
 ```
 
@@ -80,7 +78,7 @@ root.render(<App />);
 
 ### Node.js
 
-**Important:** Node.js 18.0.0+ is required (18.19.0+ or 19.9.0+ recommended). Create a dedicated `instrument.ts` file and load it before all other modules.
+**Important:** Node.js 20.19.0+ is required (v11). Create a dedicated `instrument.ts` file and load it before all other modules.
 
 **instrument.ts:**
 ```typescript
@@ -90,9 +88,8 @@ Sentry.init({
   dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0',
   environment: process.env.NODE_ENV,
   release: 'my-app@1.2.3',
-  sendDefaultPii: true,
+  dataCollection: { userInfo: true },
   tracesSampleRate: 0.1,
-  enableLogs: true,
 });
 ```
 
@@ -137,7 +134,7 @@ Sentry.setUser({
 | `id` | `string \| number` | Primary user identifier |
 | `email` | string | User email -- visible in Sentry issue detail |
 | `username` | string | Display name |
-| `ip_address` | string | Set to `"{{auto}}"` to use the client IP, or omit. In v10, IP inference is controlled by `sendDefaultPii` in `init()` |
+| `ip_address` | string | Set to `"{{auto}}"` to use the client IP, or omit. In v11, `{{auto}}` is set automatically when `dataCollection.userInfo` is `true` (the default) |
 
 You can also pass arbitrary key-value pairs:
 
@@ -167,14 +164,13 @@ Sentry.setUser(null);
 
 ### Structured Logging (`Sentry.logger`) -- Recommended
 
-Since v9.12.0, Sentry offers `Sentry.logger` as a structured logging API. In v10, logging configuration moved from `_experiments` to top-level init options. Sentry docs now recommend structured logging over `addBreadcrumb()` for new implementations -- logs are searchable, trace-connected, and viewable alongside errors.
+Since v9.41.0, Sentry offers `Sentry.logger` as a structured logging API. Logs are enabled by default from v10.71.0, and the `enableLogs` option was removed in v11 -- logs are captured whenever you call `Sentry.logger.*` or add a logging integration. Sentry docs now recommend structured logging over `addBreadcrumb()` for new implementations -- logs are searchable, trace-connected, and viewable alongside errors.
 
-**Enable in init:**
+**Enable in init:** No option needed in v11 (on SDK versions below 10.71.0, set `enableLogs: true`).
 
 ```typescript
 Sentry.init({
   dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0',
-  enableLogs: true,  // Top-level in v10 (was _experiments.enableLogs in v9)
 });
 ```
 
@@ -214,7 +210,6 @@ Sentry.logger.info(Sentry.logger.fmt`User ${userId} purchased ${productName}`);
 ```typescript
 Sentry.init({
   dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0',
-  enableLogs: true,
   beforeSendLog: (log) => {
     if (log.level === 'debug') return null;  // Drop debug logs
     if (log.attributes?.password) delete log.attributes.password;
@@ -228,7 +223,6 @@ Sentry.init({
 ```typescript
 Sentry.init({
   dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0',
-  enableLogs: true,
   integrations: [
     Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
   ],
@@ -274,7 +268,7 @@ Sentry.captureMessage('Payment retry limit reached', {
 
 ### Tags vs Extra Data
 
-- **Tags** are indexed and searchable in Sentry. Use for low-cardinality values you want to filter by (e.g., `plan`, `environment`, `region`). Keys are limited to 32 characters; values to 200 characters.
+- **Tags** are indexed and searchable in Sentry. Use for low-cardinality values you want to filter by (e.g., `plan`, `environment`, `region`). Keys and values are limited to 200 characters each. In v11, scope tags/extra are no longer applied to spans -- use `span.setAttribute()` for span-searchable data.
 - **Extra data** is not indexed. Use for high-cardinality debugging context (e.g., request payloads, specific IDs).
 
 ```typescript
@@ -341,7 +335,7 @@ Sentry.startSpan(
 // startSpanManual -- for cases where automatic closure isn't suitable
 Sentry.startSpanManual({ name: 'middleware', op: 'http' }, (span) => {
   res.once('finish', () => {
-    span.setHttpStatus(res.status);
+    Sentry.setHttpStatus(span, res.statusCode);
     span.end();  // Must call end() manually
   });
   return next();
@@ -441,7 +435,7 @@ Sentry.init({
 
 2. **Forgetting to call `setUser(null)` on logout** -- If the user logs out and another user logs in, Sentry will attribute the new user's errors to the old user. Always clear user context on logout.
 
-3. **Sending PII in stack traces and breadcrumbs** -- Sentry captures full stack traces, console logs, and HTTP request data by default. In a Forge app or any privacy-sensitive context, use `beforeSend` and `beforeBreadcrumb` hooks to strip sensitive data before it leaves the client. In v10, set `sendDefaultPii: false` (the default) to prevent automatic IP address collection.
+3. **Sending PII in stack traces and breadcrumbs** -- Sentry captures full stack traces, console logs, and HTTP request data by default. In a Forge app or any privacy-sensitive context, use `beforeSend` and `beforeBreadcrumb` hooks to strip sensitive data before it leaves the client. In v11 the default (no `dataCollection`) collects user info, cookies, headers and request bodies -- set `dataCollection: { userInfo: false, cookies: false, httpBodies: [] }` (etc.) to opt out; `sendDefaultPii: false` is deprecated.
 
 4. **Setting `tracesSampleRate: 1.0` in production** -- Full transaction sampling generates massive volume and can exceed your Sentry quota. Use `0.1` (10%) or lower in production. Adjust based on traffic volume and Sentry plan limits.
 
@@ -449,7 +443,7 @@ Sentry.init({
 
 6. **Mismatched user IDs between Sentry and product analytics** -- If your product analytics tool identifies users as `usr_123` but Sentry uses a different ID format, you lose the ability to cross-reference errors with product usage. Use the same user ID in both `Sentry.setUser({ id: 'usr_123' })` and `analytics.identify('usr_123')`.
 
-7. **Using `_experiments.enableLogs` in v10** -- In v10, `enableLogs` and `beforeSendLog` are top-level init options. The `_experiments` prefix was removed. Using the old `_experiments.enableLogs` will have no effect in v10.
+7. **Carrying v10 options into v11** -- `enableLogs` was removed in v11 (logs are sent whenever `Sentry.logger.*` is called), and `sendDefaultPii` is deprecated in favor of `dataCollection`. Note the default flipped: v10 with no `sendDefaultPii` was restrictive, v11 with no `dataCollection` collects everything. `beforeSendLog` remains a top-level option.
 
 ## Debugging
 
@@ -484,7 +478,7 @@ Check the Network tab for requests to `*.ingest.sentry.io`. Successful submissio
 2. Navigate to **Issues** to see captured errors
 3. Use the search bar to filter by user: `user.id:usr_123`
 4. Check **Performance** tab for transaction traces
-5. Check **Logs** tab for structured log entries (if `enableLogs: true`)
+5. Check **Logs** tab for structured log entries
 
 ### Common Response Codes
 
@@ -503,12 +497,13 @@ This reference covers the essentials for using Sentry alongside product analytic
 - **React SDK:** https://docs.sentry.io/platforms/javascript/guides/react/
 - **Node.js SDK:** https://docs.sentry.io/platforms/javascript/guides/node/
 - **Configuration Options:** https://docs.sentry.io/platforms/javascript/configuration/options/
-- **User Feedback & Context:** https://docs.sentry.io/platforms/javascript/enriching-events/context/
-- **Set User:** https://docs.sentry.io/platforms/javascript/enriching-events/identify-user/
+- **SDK APIs (setUser, setContext, setTag):** https://docs.sentry.io/platforms/javascript/configuration/apis/
+- **Set User:** https://docs.sentry.io/platforms/javascript/configuration/apis/#setUser
 - **Breadcrumbs:** https://docs.sentry.io/platforms/javascript/enriching-events/breadcrumbs/
 - **Structured Logging:** https://docs.sentry.io/platforms/javascript/logs/
 - **Performance Monitoring:** https://docs.sentry.io/platforms/javascript/tracing/
 - **Custom Instrumentation:** https://docs.sentry.io/platforms/javascript/tracing/instrumentation/
 - **Data Scrubbing & Privacy:** https://docs.sentry.io/security-legal-pii/scrubbing/
-- **Envelope API:** https://develop.sentry.dev/sdk/foundations/transport/envelopes/
+- **Envelope API:** https://develop.sentry.dev/sdk/foundations/envelopes/
+- **v10 to v11 Migration:** https://docs.sentry.io/platforms/javascript/migration/v10-to-v11/
 - **v9 to v10 Migration:** https://docs.sentry.io/platforms/javascript/migration/v9-to-v10/

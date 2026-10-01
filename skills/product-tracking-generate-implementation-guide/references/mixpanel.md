@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Mixpanel docs -->
+<!-- Last verified: 2026-10-01 against Mixpanel docs -->
 # Mixpanel Implementation Guide
 
 ## Overview
@@ -41,7 +41,7 @@ mixpanel.people.set({
 
 ### 2. Associate User with Groups
 
-Group Analytics is a paid add-on. Each group type (e.g. `company_id`, `workspace_id`) must first be registered as a Group Key in Mixpanel project settings.
+Group Analytics is a paid add-on for Growth and Enterprise plans, supporting up to 3 group keys (Enterprise can increase to 6 for an additional fee). Each group type (e.g. `company_id`, `workspace_id`) must first be registered as a Group Key in Mixpanel project settings.
 
 ```typescript
 // Associate user with a company
@@ -193,5 +193,5 @@ This reference covers the essentials for product tracking implementation. For ad
 - **Identifying Users:** https://docs.mixpanel.com/docs/tracking-methods/id-management/identifying-users-simplified
 - **Group Analytics:** https://docs.mixpanel.com/docs/data-structure/group-analytics
 - **User Profiles:** https://docs.mixpanel.com/docs/data-structure/user-profiles
-- **HTTP API:** https://docs.mixpanel.com/docs/tracking/http-api
+- **HTTP API:** https://docs.mixpanel.com/reference/ingestion-api
 - **Data Governance:** https://docs.mixpanel.com/docs/data-governance

@@ -133,24 +133,21 @@ The `parent_group_id` relationship allows analytics tools to understand the full
 
 When sending events, include the group where the event took place.
 
-### Accoil: Use `context.groupId`
+### Accoil: No Group Context on Track Calls
 
 ```json
 {
   "type": "track",
   "event": "View Form",
   "userId": "2697241129",
-  "context": {
-    "groupId": "ws_2251430565_001"
-  },
   "timestamp": "2021-06-01T12:29:13.481+00:00"
 }
 ```
 
-In this example:
-- The event occurred inside a workspace
-- Accoil attributes the event to that workspace
-- Accoil then rolls the event up to its parent product and account automatically
+Accoil track calls carry only `userId` and the event name — do **not** send `context.groupId` or any other group context. Instead:
+- Accoil attributes the event to groups through the user's membership, established by `identify()` (with `groupId`) and `group()` calls
+- Accoil rolls activity up to parent groups using the `parent_group_id` traits on `group()` calls
+- If events land on the wrong group, fix the user's membership (call `group()` when they join or switch workspaces/projects), not the event
 
 ### Amplitude: Use `groups` Property
 
@@ -215,15 +212,11 @@ posthog.capture({
 });
 ```
 
-### Segment: Use `context.groupId`
+### Segment / RudderStack: group() Plus the Destination's Own Mechanism
 
-```javascript
-analytics.track("View Form", {
-  formId: "form_123"
-}, {
-  context: { groupId: "ws_2251430565_001" }
-});
-```
+CDPs associate users with groups via `group()` calls; they have no generic per-event group attribution. Where a destination supports it, use that destination's documented mechanism through the CDP — e.g. via Segment: Amplitude `integrations: { Amplitude: { groups: {...} } }`, a Mixpanel group key as an event property, PostHog `$groups` in properties. Check the destination's Segment/RudderStack docs before relying on one.
+
+Don't add a blanket `context: { groupId }` to track calls. Segment's spec lists it as an optional context field, but it only matters to a destination mapped to read it (e.g. Mixpanel (Actions)' Track Group ID field defaults to it); RudderStack's spec doesn't define it. When auditing, treat existing `context.groupId` as having no effect unless a connected destination documents reading it.
 
 ---
 
@@ -302,11 +295,11 @@ Analytics tools can always roll metrics **up** the hierarchy. They cannot reliab
 ```json
 {
   "event": "Task Completed",
-  "context": {
-    "groupId": "project_PROJ"
-  }
+  "group": "project_PROJ"
 }
 ```
+
+(Conceptual — how the group is attached depends on the destination; see above.)
 
 This event contributes to:
 - Project-level metrics ✓
@@ -329,9 +322,7 @@ In these cases, attach the event to the most specific group that makes sense:
 {
   "event": "Instance Setting Updated",
   "userId": "2697241129",
-  "context": {
-    "groupId": "instance_abc"
-  }
+  "group": "instance_abc"
 }
 ```
 
@@ -358,22 +349,22 @@ This ensures:
 
 | Platform | User-Group Association | Event-Group Association | Hierarchical Groups |
 |----------|------------------------|-------------------------|---------------------|
-| **Accoil** | ✓ via group() | ✓ via context.groupId | ✓ Full support with parent_group_id |
+| **Accoil** | ✓ via identify/group() | ✓ via user membership (no group context on track) | ✓ Full support with parent_group_id |
 | **Amplitude** | ✓ via identify groups | ✓ via groups property | ⚠️ Limited — up to 5 group types, no native hierarchy |
 | **Mixpanel** | ✓ via set_group | ✓ via group key property | ✗ No hierarchy — multiple group types supported but no parent-child rollup |
-| **Segment** | ✓ via group() | ✗ Not supported | ✗ No native hierarchy |
-| **RudderStack** | ✓ via group() | ✗ Not supported | ✗ No native hierarchy |
+| **Segment** | ✓ via group() | ✗ No generic mechanism — destination-specific options only | ✗ No native hierarchy |
+| **RudderStack** | ✓ via group() | ✗ No generic mechanism — destination-specific only | ✗ No native hierarchy |
 | **PostHog** | ✓ via group() | ✓ via $groups | ⚠️ Limited — max 5 group types |
 
 ### Implications for Tracking Plan Design
 
-1. **If using Accoil:** Full hierarchy support. Define parent_group_id relationships and use context.groupId on events.
+1. **If using Accoil:** Full hierarchy support. Define parent_group_id relationships on group() calls and associate users with each group level. Track calls carry only the event name — no group context on events.
 
 2. **If using Amplitude:** Can associate events with groups (up to 5 group types), but hierarchy must be modeled via group properties (parent_group_id trait). Rollups require custom setup.
 
 3. **If using Mixpanel:** Can associate events with multiple group types simultaneously (up to 300 group keys per event). However, Mixpanel has NO hierarchy support -- events attributed to a workspace do NOT automatically roll up to a parent account. You must either include all relevant group keys on each event or handle rollups downstream.
 
-4. **If using Segment/RudderStack only:** Cannot associate individual events with groups — only users. Consider routing through a tool that supports event-level groups.
+4. **If using Segment/RudderStack:** The CDP itself only associates users with groups (via `group()`). Event-level groups come from the destination (Amplitude, Mixpanel, PostHog), sent the way that destination documents.
 
 ---
 
@@ -479,15 +470,15 @@ When choosing an analytics destination for a product with hierarchical groups, u
 
 | Destination | Multiple Group Types on One Event | Automatic Hierarchy Rollup | Notes |
 |-------------|-----------------------------------|---------------------------|-------|
-| **Accoil** | N/A (uses single groupId) | Yes | Full hierarchy via parent_group_id. Events roll up automatically. |
+| **Accoil** | N/A (no group context on track calls) | Yes | Full hierarchy via parent_group_id. Events are attributed via user membership and roll up automatically. |
 | **Mixpanel** | Yes (up to 300 group keys) | **No** | Can track against company, workspace, and project simultaneously on one event. But an event on `workspace_id` does NOT roll up to the parent `company_id`. You must include all relevant group keys on each event yourself. |
 | **Amplitude** | Yes (up to 5 group types) | **No** | Similar to Mixpanel -- supports multiple group types but no parent-child rollup. |
 | **PostHog** | Yes (up to 5 group types) | **No** | Group types are independent. No hierarchy. |
-| **Segment** | No | **No** | Only user-level group association. Cannot attribute individual events to groups. |
+| **Segment** | No | **No** | Only user-level group association (`group()`). Per-event groups only via destination-specific options. |
 
 **Why this matters:** If your product has a hierarchy (e.g. Account > Workspace > Project) and you need rollup analytics, you have two options:
 
-1. **Use a platform with native rollup** (e.g. Accoil) -- track events at the most specific level and let the platform roll up automatically.
+1. **Use a platform with native rollup** (e.g. Accoil) -- associate users with groups at each level via `group()` and let the platform attribute and roll up automatically (Accoil track calls carry no group context).
 2. **Use Mixpanel/Amplitude and include all group levels on each event** -- this works but requires discipline in implementation. Every track call must carry all relevant group keys, and any missing key means that event is invisible at that group level.
 
 ---
@@ -510,4 +501,4 @@ When choosing an analytics destination for a product with hierarchical groups, u
 2. **Not defining parent relationships** — Prevents rollup calculations
 3. **Attaching multiple groupIds to one event** — Causes double-counting
 4. **Forgetting to group() new entities** — Groups must exist before events reference them
-5. **Using Segment alone for event-level groups** — Segment doesn't support this; use Accoil/Amplitude/Mixpanel for event attribution
+5. **Expecting a CDP to attribute events to groups** — Segment/RudderStack only associate users with groups; use the destination's own per-event mechanism (Amplitude groups, Mixpanel group key property, PostHog `$groups`), not `context.groupId` (Accoil attributes via user membership instead)
