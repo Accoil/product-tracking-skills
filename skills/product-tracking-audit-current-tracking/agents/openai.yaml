@@ -1,0 +1,9 @@
+interface:
+  display_name: "Audit current tracking"
+  short_description: "Inventory existing analytics calls"
+  brand_color: "#226D4F"
+  default_prompt: "Audit the analytics tracking in this codebase."
+
+policy:
+  products:
+    - CODEX

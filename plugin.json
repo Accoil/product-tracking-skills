@@ -1,0 +1,59 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "product-tracking",
+  "version": "1.2.0",
+  "description": "Skills that make SaaS products data-ready for product analytics: model the product, audit existing tracking, design a tracking plan, generate an SDK-specific implementation guide, implement typed tracking code, and keep the plan current as features ship.",
+  "author": {
+    "name": "Accoil",
+    "email": "hello@accoil.com",
+    "url": "https://www.accoil.com"
+  },
+  "homepage": "https://www.accoil.com/product-tracking",
+  "repository": "https://github.com/accoil/product-tracking-skills",
+  "license": "MIT",
+  "keywords": [
+    "product-analytics",
+    "product-tracking",
+    "tracking-plan",
+    "event-tracking",
+    "instrumentation",
+    "b2b-saas",
+    "segment",
+    "amplitude",
+    "mixpanel",
+    "posthog"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Accoil Product Tracking",
+        "shortDescription": "Plan and instrument analytics",
+        "longDescription": "Accoil Product Tracking is a set of seven skills for engineers and product teams who need reliable product analytics in a B2B SaaS codebase.\n\nWhat it does:\n- Model the product: scan the codebase and ask a few questions to describe users, accounts, entities, and how value flows (.telemetry/product.md).\n- Audit current tracking: inventory existing analytics SDK calls, identity handling, and event naming (.telemetry/current-state.yaml).\n- Design a tracking plan: propose a minimal, consistently named set of events, properties, and group hierarchy, plus a delta from the current state (.telemetry/tracking-plan.yaml, .telemetry/delta.md).\n- Generate an implementation guide for one of 25 destinations, such as Segment, Amplitude, Mixpanel, PostHog, RudderStack, Google Analytics, Sentry, LaunchDarkly, or a generic HTTP API (.telemetry/instrument.md).\n- Implement tracking: generate typed wrapper functions and identity management code in a tracking/ directory.\n- Instrument new features: update the plan, delta, and changelog when a feature ships, changes, or is removed.\n- Write a business case for investing in product telemetry.\n\nLimitations: the lifecycle skills read and write files in the user's repository, so this plugin is available in Codex only. The skills generate plans and code only; they do not send any data to Accoil or to analytics vendors, do not create analytics accounts, and do not define KPIs or build dashboards. Review generated code before merging.",
+        "developerName": "Accoil",
+        "category": "Developer Tools",
+        "capabilities": [
+          "Scan a codebase for analytics tracking",
+          "Design a tracking plan",
+          "Generate analytics instrumentation code"
+        ],
+        "websiteURL": "https://www.accoil.com/product-tracking",
+        "supportURL": "https://www.accoil.com/about#contact",
+        "privacyPolicyURL": "https://www.accoil.com/privacy",
+        "termsOfServiceURL": "https://www.accoil.com/terms",
+        "defaultPrompt": [
+          "Audit the analytics tracking in this codebase and save a current-state inventory.",
+          "Design a tracking plan for this product with users, accounts, and core events.",
+          "Generate typed tracking code from our tracking plan for our analytics SDK."
+        ],
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/logo.png",
+        "brandColor": "#226D4F",
+        "brandColorDark": "#226D4F"
+      },
+      "onboardingSkill": "./skills/product-tracking-model-product/SKILL.md",
+      "publication": {
+        "release_notes": "Initial OpenAI directory release of the Accoil product tracking skills (v1.2.0): model product, audit current tracking, design tracking plan, implementation guides for 25 analytics destinations, implement tracking, instrument new feature, and business case."
+      }
+    }
+  }
+}

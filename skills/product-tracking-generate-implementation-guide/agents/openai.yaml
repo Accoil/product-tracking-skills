@@ -1,0 +1,9 @@
+interface:
+  display_name: "Implementation guide"
+  short_description: "SDK-specific instrumentation guide"
+  brand_color: "#226D4F"
+  default_prompt: "Generate an implementation guide for our analytics SDK."
+
+policy:
+  products:
+    - CODEX

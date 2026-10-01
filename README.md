@@ -9,7 +9,9 @@ Product Tracking Skills scans your codebase, audits what's tracked, and generate
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/accoil/product-tracking-skills)](https://github.com/accoil/product-tracking-skills)
 
-**Works in:** Claude Code &middot; Codex &middot; VS Code &middot; any tool with AI agent support
+**Works in:** Claude Code &middot; OpenAI Codex &middot; VS Code &middot; any tool with AI agent support
+
+Ships as both a **Claude Code plugin** and an **OpenAI plugin** — one set of skills, two manifests.
 
 ---
 
@@ -301,7 +303,19 @@ Install via Claude Code's built-in plugin system:
 /plugin install product-tracking-skills
 ```
 
-### Option 3: Clone and Copy
+### Option 3: OpenAI Codex
+
+The repo includes an OpenAI plugin manifest (`plugin.json`, packaged as `product-tracking`) and per-skill Codex metadata (`skills/*/agents/openai.yaml`). The OpenAI plugin directory listing is in review; until it's live, install the skills directly — Codex discovers skills in `.agents/skills`:
+
+```bash
+git clone https://github.com/accoil/product-tracking-skills.git
+mkdir -p ~/.agents/skills   # or $REPO_ROOT/.agents/skills for a single repo
+cp -r product-tracking-skills/skills/* ~/.agents/skills/
+```
+
+The background tracking watchdog is Claude Code–only; the seven skills work in both.
+
+### Option 4: Clone and Copy
 
 Clone the repo and copy the skills folder:
 

@@ -1,0 +1,9 @@
+interface:
+  display_name: "Design tracking plan"
+  short_description: "Plan events, properties and groups"
+  brand_color: "#226D4F"
+  default_prompt: "Design a tracking plan for this product."
+
+policy:
+  products:
+    - CODEX
