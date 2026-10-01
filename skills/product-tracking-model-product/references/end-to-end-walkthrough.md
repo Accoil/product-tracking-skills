@@ -203,10 +203,13 @@ events:
     phase: core
     description: Existing user invites someone to workspace
     properties:
-      - name: invitee_email
+      - name: invitation_id
         type: string
         required: true
-        pii: true
+        description: "Links to the invitee's identify call once they accept — no invitee PII on the event"
+      - name: invitee_email_domain
+        type: string
+        description: "Domain only (e.g. acme.com) — supports same-domain vs external invite analysis"
       - name: role_assigned
         type: string
         enum: [admin, member, viewer]

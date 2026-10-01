@@ -5,7 +5,7 @@
 
 meta:
   product: "Your Product Name"
-  version: 1
+  version: "1.0.0"  # semver string; instrument-new-feature bumps major/minor/patch
   created: 2024-01-01
   updated: 2024-01-01
   owner: "team@example.com"
@@ -151,7 +151,7 @@ events:
   
   - name: report.created
     category: core_value
-    group_level: workspace  # Or project, depending on your hierarchy
+    group_level: account  # Must match a groups[].type — use workspace/project once those groups are defined
     description: User creates a new report
     properties:
       - name: report_id
@@ -297,38 +297,38 @@ events:
 
 snapshot_sync:
   cadence: daily  # daily or hourly — daily for most, hourly for billing-critical
+  traits:
+    # Account-level snapshots
+    - entity: account
+      trait: seats_used
+      type: integer
+      source: "COUNT of active users per account"
 
-  # Account-level snapshots
-  - entity: account
-    trait: seats_used
-    type: integer
-    source: "COUNT of active users per account"
+    - entity: account
+      trait: mrr
+      type: number
+      source: "Current MRR from billing system"
 
-  - entity: account
-    trait: mrr
-    type: number
-    source: "Current MRR from billing system"
+    - entity: account
+      trait: active_users_30d
+      type: integer
+      source: "COUNT of users with events in last 30 days"
 
-  - entity: account
-    trait: active_users_30d
-    type: integer
-    source: "COUNT of users with events in last 30 days"
-
-  # Uncomment and customize for your product
-  # - entity: account
-  #   trait: storage_used_gb
-  #   type: number
-  #   source: "SUM of storage per account"
-  #
-  # - entity: account
-  #   trait: reports_created_count
-  #   type: integer
-  #   source: "COUNT of reports per account"
-  #
-  # - entity: workspace
-  #   trait: member_count
-  #   type: integer
-  #   source: "COUNT of active members per workspace"
+    # Uncomment and customize for your product
+    # - entity: account
+    #   trait: storage_used_gb
+    #   type: number
+    #   source: "SUM of storage per account"
+    #
+    # - entity: account
+    #   trait: reports_created_count
+    #   type: integer
+    #   source: "COUNT of reports per account"
+    #
+    # - entity: workspace
+    #   trait: member_count
+    #   type: integer
+    #   source: "COUNT of active members per workspace"
 
 # -----------------------------------------
 # Implementation Notes
@@ -339,6 +339,7 @@ implementation_notes:
   - "Use ISO 8601 for all datetime properties"
   - "Prefer prefixed IDs (usr_, acc_, ws_, proj_) for clarity"
   - "Never include raw PII in event properties"
+  - "Every event group_level must match a groups[].type defined above"
   
   # Group hierarchy
   - "Define groups with parent_group_id to establish hierarchy"

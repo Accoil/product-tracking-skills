@@ -345,6 +345,10 @@ Found a bug? Have a suggestion? [Open an issue](https://github.com/accoil/produc
 
 ---
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history and [Releases](https://github.com/Accoil/product-tracking-skills/releases) for full notes.
+
 ## License
 
 MIT — free for any use. Built by [Accoil](https://accoil.com).

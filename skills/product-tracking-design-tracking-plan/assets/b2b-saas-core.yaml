@@ -131,10 +131,13 @@ events:
     category: collaboration
     description: "Existing user invites someone to account"
     properties:
-      - name: invitee_email
+      - name: invitation_id
         type: string
-        pii: true
         required: true
+        description: "Links to the invitee's identify call once they accept — no invitee PII on the event"
+      - name: invitee_email_domain
+        type: string
+        description: "Domain only (e.g. acme.com) — supports same-domain vs external invite analysis"
       - name: invitee_role
         type: string
         enum: [owner, admin, member, viewer]
