@@ -339,7 +339,7 @@ The tracking plan MUST include a `meta:` block. This is not optional — the imp
 ```yaml
 meta:
   product: "[Name]"
-  version: 1
+  version: "1.0.0"  # semver string
   created: YYYY-MM-DD
   updated: YYYY-MM-DD
   owner: "[team]"

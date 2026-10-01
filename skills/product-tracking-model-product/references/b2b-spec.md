@@ -71,7 +71,7 @@ These events should exist in every B2B SaaS tracking plan.
 | `user.signed_up` | User creates account | `signup_source`, `account_id` |
 | `user.signed_in` | User logs in | `method` |
 | `user.signed_out` | User logs out | — |
-| `user.invited` | User invites someone | `invitee_role`, `invitee_email` (hashed) |
+| `user.invited` | User invites someone | `invitee_role`, `invitation_id`, `invitee_email_domain` |
 | `user.joined` | Invited user joins | `invitation_id`, `role` |
 
 Note: "Activation" is a computed state defined in downstream analytics tools, not an event. Track the actions that might constitute activation (core value events, integrations connected, etc.) and let analytics define what combination means "activated."
