@@ -8,7 +8,7 @@ Implementation patterns for products running on Atlassian Forge. When `meta.plat
 
 Traditional frontend analytics are privacy nightmares. Browser-based tracking automatically transmits user IP addresses, referrer URLs (revealing internal Jira/Confluence navigation), full page URLs (containing project names and issue keys), user agent strings, session cookies, and can accidentally capture form data containing end user content. In Forge apps, this is both a compliance violation and a trust issue.
 
-**The solution is complete backend control.** By routing ALL analytics through the Forge backend, the app controls exactly what information reaches the analytics provider. The frontend never talks directly to any external service — this is not just a best practice, it is a hard constraint of the Forge platform. Forge Custom UI frontends run in a sandboxed iframe and cannot make direct network calls to external services. All external communication must go through `invoke()` to a backend resolver, which then uses `@forge/api` fetch.
+**The solution is complete backend control.** By routing ALL analytics through the Forge backend, the app controls exactly what information reaches the analytics provider. The frontend never talks directly to any external service. Forge Custom UI frontends run in a sandboxed iframe whose CSP blocks external calls unless the domain is declared under `permissions.external.fetch.client` — this architecture deliberately declares no client egress. All external communication goes through `invoke()` to a backend resolver, which then uses `@forge/api` fetch.
 
 This architecture provides:
 - **No accidental PII transmission** — only explicitly constructed payloads leave the system
@@ -155,7 +155,7 @@ Common pre-approved domains for tracking plan destinations:
 | **Google Analytics** | `*.google-analytics.com` |
 | **Sentry** | `*.ingest.sentry.io` |
 
-Other approved providers include HotJar, LaunchDarkly, New Relic, Plausible, Azure Application Insights, Cloudflare Web Analytics, Fathom, Statsig, UserPilot, and more. See the [Atlassian analytics tool policy](https://developer.atlassian.com/platform/forge/analytics-tool-policy/) for the full list.
+Other approved providers include HotJar, LaunchDarkly, New Relic, Plausible, Azure Application Insights, Cloudflare Web Analytics, Fathom, Statsig, Userpilot, and more. See the [Atlassian analytics tool policy](https://developer.atlassian.com/platform/forge/analytics-tool-policy/) for the full list.
 
 **RudderStack is not on the approved list.** If the tracking plan specifies RudderStack, use an approved alternative or raise a support request with Atlassian.
 

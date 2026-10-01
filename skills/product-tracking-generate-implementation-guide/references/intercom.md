@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-11 against Intercom docs -->
+<!-- Last verified: 2026-10-01 against Intercom docs (REST API 2.16, @intercom/messenger-js-sdk 0.0.20, intercom-client 7.0.3) -->
 # Intercom Implementation Reference
 
 ## Overview
@@ -26,14 +26,15 @@ Intercom provides a JavaScript Messenger SDK for browser-side identity and event
 ```typescript
 import Intercom from '@intercom/messenger-js-sdk';
 
+// intercomJwt is minted by your server (see Messenger Security below) and
+// fetched by the browser after login. Identity and protected data live in the token.
 Intercom({
   app_id: 'YOUR_APP_ID',
-  user_id: 'usr_123',
-  email: 'jane@example.com',
-  created_at: 1705276800,
-  user_hash: 'HMAC_SHA256_HASH', // required when identity verification is enabled
+  intercom_user_jwt: intercomJwt,
 });
 ```
+
+For EU or Australian workspaces, pass `region: 'eu'` or `region: 'ap'` to `Intercom({...})`. The SDK's `InitType` has no typed `intercom_user_jwt` field (v0.0.20), but its index signature accepts it.
 
 ### Browser (Snippet)
 
@@ -43,17 +44,61 @@ Intercom({
 </script>
 ```
 
-Then boot with user identity:
+Then boot the logged-in user with a server-minted JWT:
 
 ```javascript
 window.Intercom('boot', {
+  api_base: 'https://api-iam.intercom.io',
   app_id: 'YOUR_APP_ID',
-  user_id: 'usr_123',
-  email: 'jane@example.com',
-  created_at: 1705276800,
-  user_hash: 'HMAC_SHA256_HASH',
+  intercom_user_jwt: intercomJwt, // from your server; never mint in the browser
 });
 ```
+
+### Messenger Security (JWT)
+
+Messenger Security with JWTs is Intercom's recommended way to identify logged-in users. Your server signs a JWT containing the user's identity and any attributes you want protected; the browser passes it to `boot` as `intercom_user_jwt`. Intercom then sets a session cookie (default 7 days; shorten with `session_duration` or in Messenger settings).
+
+- **Algorithm:** HS256, signed with the Messenger API secret from Settings > Workspace > Security > Messenger. The secret and the signing code stay server-side.
+- **Claims:** `user_id` is the only required claim, and tokens without it are rejected. If email is your only identifier, put it in both `user_id` and `email`. Add `email`, `name`, `created_at` and user custom attributes (e.g. `plan`, `role`) as claims, too. Claim names are case-sensitive.
+- **Company:** nest it under a `company` object in the payload (`company.company_id` plus attributes). Flat `company_id` / `company_name` claims are not recognized, and a `company` passed outside the JWT is ignored (see group() below).
+- **Expiry:** set a short `exp`. Mint a fresh token on every boot. Intercom suggests a minimum of 5 minutes to avoid unexpected expiry.
+- **Every write needs a token:** send a JWT on every request that boots the user or updates their data.
+- **Unsigned data:** attributes sent outside the JWT are applied only if "Messenger updates" are allowed for that attribute. Mark identifying attributes (email, phone, account ids) as protected so that only the JWT can set them.
+- **Enforce:** once every boot sends valid tokens, turn on enforcement in Messenger settings > Security. An invalid `intercom_user_jwt` stops the Messenger loading even when enforcement is off, so omit the field entirely rather than sending a placeholder.
+
+**Server (Node.js, `jsonwebtoken`):**
+```typescript
+import jwt from 'jsonwebtoken';
+
+// Call from an authenticated endpoint, e.g. GET /api/intercom-jwt
+export function mintIntercomJwt(): string {
+  return jwt.sign(
+    {
+      user_id: 'usr_123', // required
+      email: 'jane@example.com',
+      name: 'Jane Doe',
+      created_at: 1705276800,
+      role: 'admin', // user custom attributes
+      plan: 'enterprise',
+      company: {
+        company_id: 'acc_456', // nested; flat company_id claims are ignored
+        name: 'Acme Corp',
+        plan: 'enterprise',
+        monthly_spend: 5000,
+        size: 150,
+        industry: 'technology',
+        created_at: 1685577600,
+      },
+    },
+    process.env.INTERCOM_MESSENGER_SECRET!,
+    { algorithm: 'HS256', expiresIn: '10m' },
+  );
+}
+```
+
+Call `Intercom('shutdown')` on logout. This clears the session cookie, and a new user cannot be booted until you do (otherwise you get a "JWT identity mismatch" error).
+
+**Legacy:** older installs send `user_hash`, the HMAC-SHA256 hash from Identity Verification. It is deprecated but still accepted, and it must never be sent together with `intercom_user_jwt` (400). If you find it during an audit, flag it for migration to JWT.
 
 ### Node.js
 
@@ -71,8 +116,10 @@ const client = new IntercomClient({
 Base URL: https://api.intercom.io
 Authorization: Bearer YOUR_ACCESS_TOKEN
 Content-Type: application/json
-Intercom-Version: 2.11
+Intercom-Version: 2.16
 ```
+
+Regional hosts: `https://api.eu.intercom.io` (EU) and `https://api.au.intercom.io` (Australia). The `intercom-client` v7.0.3 SDK sends `Intercom-Version: 2.14` by default (configurable via the `version` client option).
 
 Access tokens are created in Settings > Developer Hub > Your App > Authentication. Tokens require write permissions to send events and create/update contacts and companies.
 
@@ -82,61 +129,41 @@ Access tokens are created in Settings > Developer Hub > Your App > Authenticatio
 
 Identifies a user (contact) and sets user-level attributes. Intercom distinguishes between `user` and `lead` roles — use `role: "user"` for authenticated users.
 
+With Messenger Security, the user and company traits go into the server-minted JWT (see [Messenger Security (JWT)](#messenger-security-jwt) for the full payload). The browser only passes the token.
+
 **Browser (snippet):**
 ```javascript
+// Server payload: { user_id: 'usr_123', email, name, created_at, role, plan,
+//                   company: { company_id: 'acc_456', name: 'Acme Corp', ... } }
 window.Intercom('boot', {
   app_id: 'YOUR_APP_ID',
-  user_id: 'usr_123',
-  email: 'jane@example.com',
-  name: 'Jane Doe',
-  created_at: 1705276800,
-  user_hash: 'HMAC_SHA256_HASH',
-  company: {
-    company_id: 'acc_456',
-    name: 'Acme Corp',
-    plan: 'enterprise',
-    monthly_spend: 5000,
-    created_at: 1685577600,
-  },
-  custom_attributes: {
-    role: 'admin',
-    plan: 'enterprise',
-  },
+  intercom_user_jwt: intercomJwt,
 });
 ```
 
-To update traits after boot:
+To update protected traits after boot, mint a new JWT with the changed claims and pass it to `update`:
 
 ```javascript
 window.Intercom('update', {
-  name: 'Jane Doe',
-  custom_attributes: {
-    role: 'admin',
-    last_active_project: 'proj_123',
-  },
+  intercom_user_jwt: refreshedJwt, // payload now includes e.g. last_active_project: 'proj_123'
 });
 ```
 
+Non-sensitive, unprotected attributes can be sent alongside the token (e.g. `Intercom('update', { intercom_user_jwt: refreshedJwt, last_viewed_tab: 'reports' })`). They are applied only if Messenger updates are allowed for that attribute.
+
 **Browser (Messenger JS SDK):**
 ```typescript
-import Intercom from '@intercom/messenger-js-sdk';
-import { update } from '@intercom/messenger-js-sdk';
+import Intercom, { update } from '@intercom/messenger-js-sdk';
 
-// Initial boot
+// Initial boot. Identity and traits are inside the JWT.
 Intercom({
   app_id: 'YOUR_APP_ID',
-  user_id: 'usr_123',
-  email: 'jane@example.com',
-  name: 'Jane Doe',
-  created_at: 1705276800,
+  intercom_user_jwt: intercomJwt,
 });
 
-// Update traits later
+// Update traits later with a freshly minted token
 update({
-  name: 'Jane Doe',
-  custom_attributes: {
-    role: 'admin',
-  },
+  intercom_user_jwt: refreshedJwt,
 });
 ```
 
@@ -145,11 +172,11 @@ update({
 // Create a new contact
 await client.contacts.create({
   role: 'user',
-  externalId: 'usr_123',
+  external_id: 'usr_123',
   email: 'jane@example.com',
   name: 'Jane Doe',
-  signedUpAt: 1705276800,
-  customAttributes: {
+  signed_up_at: 1705276800,
+  custom_attributes: {
     role: 'admin',
     plan: 'enterprise',
   },
@@ -157,9 +184,9 @@ await client.contacts.create({
 
 // Update an existing contact (requires Intercom's internal contact ID)
 await client.contacts.update({
-  contactId: 'INTERCOM_CONTACT_ID',
+  contact_id: 'INTERCOM_CONTACT_ID',
   name: 'Jane Doe',
-  customAttributes: {
+  custom_attributes: {
     role: 'admin',
     plan: 'enterprise',
   },
@@ -201,25 +228,37 @@ PUT /contacts/{id}
 
 Intercom uses "companies" as its account/group concept. Companies are associated with contacts and can carry their own attributes. Every user can belong to multiple companies.
 
+With Messenger Security, there are two supported ways to send company data:
+
+1. **In the JWT (recommended for the logged-in browser session).** Nest a `company` object in the token payload. At boot, Intercom creates the company and associates the user with it, with no extra latency. A `company` object passed outside the JWT is ignored: the company is not updated and its `last_seen` is not refreshed.
+2. **Server-side REST API.** Create the company and attach contacts from your backend (see Node.js / HTTP API below). Use this to pre-create companies at tenant creation, before any user logs in, and to set company custom attributes such as `mrr` and `is_paying`.
+
+**Server (Node.js, JWT payload):**
+```typescript
+jwt.sign(
+  {
+    user_id: 'usr_123',
+    email: 'jane@example.com',
+    company: {
+      company_id: 'acc_456', // must be nested under company, not a flat claim
+      name: 'Acme Corp',
+      plan: 'enterprise',
+      monthly_spend: 5000,
+      size: 150,
+      industry: 'technology',
+      created_at: 1685577600,
+    },
+  },
+  process.env.INTERCOM_MESSENGER_SECRET!,
+  { algorithm: 'HS256', expiresIn: '10m' },
+);
+```
+
 **Browser (snippet):**
 ```javascript
 window.Intercom('boot', {
   app_id: 'YOUR_APP_ID',
-  user_id: 'usr_123',
-  email: 'jane@example.com',
-  company: {
-    company_id: 'acc_456',
-    name: 'Acme Corp',
-    plan: 'enterprise',
-    monthly_spend: 5000,
-    size: 150,
-    industry: 'technology',
-    created_at: 1685577600,
-    custom_attributes: {
-      is_paying: true,
-      mrr: 5000,
-    },
-  },
+  intercom_user_jwt: intercomJwt, // carries user usr_123 + company acc_456
 });
 ```
 
@@ -227,14 +266,14 @@ window.Intercom('boot', {
 ```typescript
 // Create or update a company
 await client.companies.createOrUpdate({
-  companyId: 'acc_456',
+  company_id: 'acc_456',
   name: 'Acme Corp',
   plan: 'enterprise',
   size: 150,
   industry: 'technology',
-  monthlySpend: 5000,
-  remoteCreatedAt: 1685577600,
-  customAttributes: {
+  monthly_spend: 5000,
+  remote_created_at: 1685577600,
+  custom_attributes: {
     is_paying: true,
     mrr: 5000,
   },
@@ -242,7 +281,7 @@ await client.companies.createOrUpdate({
 
 // Attach a contact to a company
 await client.companies.attachContact({
-  contactId: 'INTERCOM_CONTACT_ID',
+  contact_id: 'INTERCOM_CONTACT_ID',
   id: 'INTERCOM_COMPANY_ID',
 });
 ```
@@ -274,7 +313,7 @@ POST /contacts/{contact_id}/companies
 }
 ```
 
-**Important:** Companies are only visible in Intercom when at least one contact is associated with them. In the browser, passing the `company` object inside `boot` or `update` automatically associates the current user with that company. Server-side requires an explicit attach call.
+**Important:** Companies are only visible in Intercom when at least one contact is associated with them. In the browser, a `company` object inside the JWT payload associates the current user with that company automatically. Server-side requires an explicit attach call.
 
 ### track()
 
@@ -303,9 +342,9 @@ trackEvent('report_created', {
 **Node.js:**
 ```typescript
 await client.events.create({
-  eventName: 'report_created',
-  userId: 'usr_123',
-  createdAt: Math.floor(Date.now() / 1000),
+  event_name: 'report_created',
+  user_id: 'usr_123',
+  created_at: Math.floor(Date.now() / 1000),
   metadata: {
     report_id: 'rpt_789',
     report_type: 'standard',
@@ -401,10 +440,10 @@ Intercom uses company attributes for segmentation, message targeting, and report
 | API rate limit (per app) | 10,000 requests/minute |
 | API rate limit (per workspace) | 25,000 requests/minute (cumulative across apps) |
 | Rate limit window | Distributed in 10-second intervals |
-| Event metadata keys | 10 per event (first 10 by send order) |
+| Event metadata keys | 10 per event (first 10 by send order) — REST API reference; the Help Center event-tracking article says up to 20, so design for 10 |
 | Event metadata string values | 255 characters max |
 | Custom attributes per contact/company | 250 active (soft limit; archive unused to free space) |
-| Custom attribute key length | 190 characters max |
+| Custom attribute key length | 190 characters max <!-- UNVERIFIED: 190-char key limit not found in Intercom docs as of 2026-10-01 --> |
 | Custom attribute value (string) | 255 characters max |
 | `monthly_spend` max | 2,147,483,647 (signed 32-bit integer) |
 | Browser `update` calls | 20 per user per 30-minute window |
@@ -428,6 +467,14 @@ Intercom uses company attributes for segmentation, message targeting, and report
 
 8. **API events do not trigger Banners or Carousels** — Events sent via the REST API cannot trigger Banner or Carousel message types. Only events from the JavaScript Messenger SDK or mobile SDKs can trigger these. Use the browser SDK for events that should trigger in-app messages.
 
+9. **Company data outside the JWT is silently ignored** — Once `intercom_user_jwt` is present, a `company` object in `boot`/`update` does nothing: the company is not created or updated, and `last_seen` is not refreshed. Flat `company_id` claims in the token are also ignored. Nest `company: { company_id: 'acc_456', ... }` inside the JWT payload, or manage companies from the server via the REST API.
+
+10. **JWT minted or signed incorrectly** — The Messenger secret and signing code must stay server-side. Tokens must be HS256, include `user_id`, and carry a future `exp`. Mint a fresh token for each boot and update. An invalid or placeholder `intercom_user_jwt` stops the Messenger loading even when enforcement is off. Sending both `user_hash` and `intercom_user_jwt` returns a 400.
+
+11. **Protected attributes still writable from the browser** — Attributes sent in the JWT can still be overwritten by unsigned Messenger updates unless "Messenger updates" are disabled for them. Protect identifying attributes (email, phone, account ids) in Settings > Data > People.
+
+12. **Missing `shutdown` on logout** — Without `Intercom('shutdown')`, the session cookie (7 days by default) shows the previous user's conversations on shared browsers, and booting a different user fails with "JWT identity mismatch".
+
 ## Debugging
 
 **Browser:** The Intercom Messenger exposes events in the browser console. Open DevTools Network tab and filter for requests to `api-iam.intercom.io` or `widget.intercom.io`. Inspect outgoing POST payloads to verify user IDs and event metadata.
@@ -448,13 +495,13 @@ Intercom uses company attributes for segmentation, message targeting, and report
 ```typescript
 try {
   await client.events.create({
-    eventName: 'report_created',
-    userId: 'usr_123',
-    createdAt: Math.floor(Date.now() / 1000),
+    event_name: 'report_created',
+    user_id: 'usr_123',
+    created_at: Math.floor(Date.now() / 1000),
     metadata: { report_id: 'rpt_789' },
   });
 } catch (error) {
-  if (error instanceof IntercomError) {
+  if (error instanceof IntercomError) { // import { IntercomError } from 'intercom-client'
     console.error('[Intercom] Event failed:', error.statusCode, error.message);
   }
 }
@@ -468,10 +515,15 @@ This reference covers the essentials for product tracking implementation. For ad
 - **Data Events API:** https://developers.intercom.com/docs/references/rest-api/api.intercom.io/data-events/createdataevent
 - **Contacts API:** https://developers.intercom.com/docs/references/rest-api/api.intercom.io/contacts
 - **Companies API:** https://developers.intercom.com/docs/references/rest-api/api.intercom.io/companies
-- **JavaScript API Installation:** https://www.intercom.com/help/en/articles/170-install-intercom-in-your-product
+- **JavaScript API Installation (SPA):** https://www.intercom.com/help/en/articles/170-integrate-intercom-in-a-single-page-app
+- **JavaScript API Methods:** https://developers.intercom.com/installing-intercom/web/methods
 - **Event Tracking Setup:** https://www.intercom.com/help/en/articles/175-set-up-event-tracking-in-intercom
-- **Custom Data Attributes:** https://www.intercom.com/help/en/articles/179-send-custom-user-attributes-to-intercom
+- **Custom Data Attributes:** https://www.intercom.com/help/en/articles/179-create-and-track-custom-data-attributes-cdas
 - **Messenger JS SDK (npm):** https://www.npmjs.com/package/@intercom/messenger-js-sdk
 - **Node.js SDK (npm):** https://www.npmjs.com/package/intercom-client
 - **Node.js SDK (GitHub):** https://github.com/intercom/intercom-node
-- **Identity Verification:** https://www.intercom.com/help/en/articles/183-set-up-identity-verification-for-web-and-mobile
+- **Messenger Security (JWT):** https://www.intercom.com/help/en/articles/10589769-authenticating-users-in-the-messenger-with-json-web-tokens-jwts
+- **Securing Messenger data:** https://www.intercom.com/help/en/articles/11087109-securing-the-data-you-send-via-the-messenger
+- **Migrating from Identity Verification to JWTs:** https://www.intercom.com/help/en/articles/10807823-migrating-from-identity-verification-to-messenger-security-with-jwts
+- **Identity Verification (deprecated):** https://www.intercom.com/help/en/articles/183-set-up-identity-verification-for-web-and-mobile-deprecated
+- **Rate Limiting:** https://developers.intercom.com/docs/references/rest-api/errors/rate-limiting

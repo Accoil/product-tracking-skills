@@ -1,3 +1,4 @@
+<!-- Last verified: 2026-10-01 against PostHog docs (defaults snapshot 2026-05-30) -->
 # PostHog Implementation Guide
 
 ## Overview
@@ -23,7 +24,7 @@ npm install posthog-node
 import posthog from 'posthog-js';
 
 posthog.init('YOUR_API_KEY', {
-  api_host: 'https://app.posthog.com',  // or your self-hosted URL
+  api_host: 'https://us.i.posthog.com',  // EU Cloud: 'https://eu.i.posthog.com', or your self-hosted URL
   
   // Tracking options
   autocapture: true,           // Auto-track clicks, inputs, etc.
@@ -48,7 +49,7 @@ posthog.init('YOUR_API_KEY', {
 import { PostHog } from 'posthog-node';
 
 const posthog = new PostHog('YOUR_API_KEY', {
-  host: 'https://app.posthog.com',  // or your self-hosted URL
+  host: 'https://us.i.posthog.com',  // EU Cloud: 'https://eu.i.posthog.com', or your self-hosted URL
   flushAt: 20,        // Batch size
   flushInterval: 10000  // Flush every 10s
 });
@@ -112,7 +113,7 @@ posthog.setPersonProperties({
   plan: 'pro'
 });
 
-// Browser - set once
+// Browser - flag evaluation only (not saved to the person profile)
 posthog.setPersonPropertiesForFlags({
   beta_user: true
 });
@@ -120,7 +121,7 @@ posthog.setPersonPropertiesForFlags({
 
 ## Groups (B2B / Account Analytics)
 
-Groups enable account-level analysis for B2B.
+Groups enable account-level analysis for B2B. **Note:** Group analytics is a paid add-on in PostHog (max 5 group types per project).
 
 ### Associate User with Group
 ```typescript
@@ -185,17 +186,16 @@ const payload = posthog.getFeatureFlagPayload('pricing-experiment');
 
 ### Check Flag (Node.js)
 ```typescript
-const isEnabled = await posthog.isFeatureEnabled('new-checkout', 'usr_123');
+// evaluateFlags() is the current API; isFeatureEnabled()/getFeatureFlag() are deprecated
+const flags = await posthog.evaluateFlags('usr_123');
+const isEnabled = flags.isEnabled('new-checkout');
 
-// With person properties for evaluation
-const isEnabled = await posthog.isFeatureEnabled(
-  'new-checkout',
-  'usr_123',
-  {
-    personProperties: { plan: 'pro' },
-    groupProperties: { company: { plan: 'enterprise' } }
-  }
-);
+// With person/group properties for evaluation
+const flagsWithProps = await posthog.evaluateFlags('usr_123', {
+  personProperties: { plan: 'pro' },
+  groups: { company: 'acc_456' },
+  groupProperties: { company: { plan: 'enterprise' } }
+});
 ```
 
 ## Session Recording (Browser)
@@ -247,8 +247,11 @@ posthog.init(key, {
 <!-- Add data-ph-capture-attribute-* for custom properties -->
 <button data-ph-capture-attribute-button-type="primary">Click</button>
 
-<!-- Exclude from autocapture -->
-<button data-ph-no-capture>Don't track me</button>
+<!-- Exclude from autocapture only -->
+<button data-ph-no-autocapture>Don't track me</button>
+
+<!-- Exclude from autocapture and session replay -->
+<button class="ph-no-capture">Don't track or record me</button>
 ```
 
 ## Best Practices
@@ -270,7 +273,7 @@ posthog.group('company', user.accountId, {
 
 ### 2. Reset on Logout
 ```typescript
-posthog.reset();  // Clears identity
+posthog.reset();  // Clears identity and group associations
 // or
 posthog.reset(true);  // Also resets device ID
 ```
@@ -353,7 +356,7 @@ posthog.init('your-project-key', {
 
 ```typescript
 posthog.init('your-project-key', {
-  api_host: 'https://eu.posthog.com'
+  api_host: 'https://eu.i.posthog.com'
 });
 ```
 

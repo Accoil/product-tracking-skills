@@ -75,7 +75,7 @@ These aren't thin prompts. Each skill includes a built-in reference library:
 - **Naming conventions** — dot.notation for event names (`report.created`), snake_case for properties and traits (`signup_source`)
 - **B2B entity modeling** — two-entity model, group hierarchies, instance vs user-level tracking
 - **7 category templates** — opinionated starting points for B2B SaaS, AI/ML, dev tools, and more
-- **Instrumentation references for 24 analytics destinations** — product analytics, CDPs, web analytics, error monitoring, feature flags, and session tools
+- **Instrumentation references for 25 analytics destinations** — product analytics, CDPs, product adoption, web analytics, error monitoring, feature flags, and session tools
 
 The skills encode the kind of knowledge that usually lives in a senior analytics engineer's head — except it doesn't walk out the door when they leave.
 
@@ -125,7 +125,7 @@ If you're a B2B SaaS team and you can't answer *"which features does account X a
 
 ## Supported Destinations
 
-Instrumentation references for 25+ destinations across 7 categories. Each reference documents real SDK call patterns, authentication, constraints, and common pitfalls.
+Instrumentation references for 25+ destinations across 8 categories. Each reference documents real SDK call patterns, authentication, constraints, and common pitfalls.
 
 ### Product Analytics & CDPs
 Full identify → group → track lifecycle. Primary destinations for product usage data.
@@ -144,6 +144,7 @@ Account-level engagement scoring and lifecycle signals.
 | Platform | Browser | Server |
 |----------|---------|--------|
 | **Accoil** | `tracker.js` (CDN) | Direct API |
+| **CustomerScore.io** | Tracker snippet (CDN) | Direct API |
 | **Intercom** | `@intercom/messenger-js-sdk` | `intercom-client` |
 | **Journy** | — | `@journyio/sdk` |
 
@@ -157,7 +158,7 @@ Page-level and event tracking.
 | **Fathom** | Script tag / Events API |
 | **Simple Analytics** | Script tag / Events API |
 | **Usermaven** | `usermaven-js` / HTTP API |
-| **Beam** *(shutting down Sept 2026)*, **Microanalytics, Cabin, Cloudflare** | Script tag |
+| **Microanalytics, Cabin, Cloudflare** | Script tag |
 
 ### Error & Performance Monitoring
 User context for debugging. Identify calls attach user/account info to error reports.
@@ -176,13 +177,19 @@ Targeting attributes and experiment exposure tracking.
 | **LaunchDarkly** | `launchdarkly-js-client-sdk` | `@launchdarkly/node-server-sdk` |
 | **Statsig** | `@statsig/js-client` | `@statsig/statsig-node-core` |
 
+### Product Adoption Platforms
+In-app guidance plus product analytics with user and company (account) profiles.
+
+| Platform | Browser | Server |
+|----------|---------|--------|
+| **Userpilot** | `userpilot` (npm) / script tag | HTTP API (identify, companies, track, bulk); also via Segment / RudderStack |
+
 ### Session & Behavior Tools
-Session recording and in-app guidance with user identification.
+Session recording and feedback with user identification.
 
 | Platform | Integration |
 |----------|-------------|
 | **Hotjar** | Script tag / Identify API |
-| **UserPilot** | `userpilot.js` / Identify API |
 
 ### Tag Management & Architecture
 

@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Cabin docs -->
+<!-- Last verified: 2026-10-01 against Cabin docs and live hello.js v0.6.2 source -->
 # Cabin (WithCabin) Implementation Reference
 
 ## Overview
@@ -26,14 +26,14 @@ permissions:
   external:
     fetch:
       backend:
-        - address: "*.scripts.withcabin.com"
+        - address: "*.withcabin.com"  # script from scripts.withcabin.com, beacons to ping.withcabin.com
           category: analytics
           inScopeEUD: false
 ```
 
 ### SPA Support
 
-Cabin automatically tracks client-side route changes using the History API (`pushState`/`replaceState`). SPAs built with React Router, Next.js, Vue Router, and similar frameworks should have page views tracked without additional configuration.
+Cabin automatically tracks client-side route changes: the live `hello.js` source wraps `history.pushState` and listens for `popstate` (it does not hook `replaceState`). SPAs built with React Router, Next.js, Vue Router, and similar frameworks should have page views tracked without additional configuration.
 
 If the automatic History API detection does not work in your specific setup, there is no documented manual `pageview()` function to call explicitly.
 
@@ -45,7 +45,7 @@ Page views are tracked automatically on initial page load and on SPA route chang
 
 ### Custom Events
 
-Event tracking requires a **PRO account**.
+Event tracking requires a paid **Plus or Scale** plan (not available on Free).
 
 Cabin supports basic custom event tracking via two methods:
 
@@ -54,6 +54,9 @@ Cabin supports basic custom event tracking via two methods:
 ```javascript
 // Track a named event
 cabin.event('button clicked');
+
+// Optional second argument: callback run after the beacon is queued
+cabin.event('button clicked', () => { /* ... */ });
 ```
 
 #### HTML Data Attributes
@@ -73,13 +76,13 @@ Custom events accept only an event name string. There is no support for event pr
 | Constraint | Value |
 |---|---|
 | Custom event properties | Not supported |
-| Event tracking | PRO account required |
+| Event tracking | Plus or Scale plan required |
 | User identification | Not supported |
 | Account/group grouping | Not supported |
-| Server-side API | Read-only analytics API (PRO only) |
+| Server-side API | Read-only analytics API (Plus or Scale), `x-api-key` header auth |
 | Cookie usage | None |
-| Data retention | Varies by plan |
-| API rate limit | 20 requests per minute |
+| Data retention | 30 days (Free), 12 months (Plus), unlimited (Scale) |
+| API rate limit | ~20 requests per minute recommended (contact support for more) |
 
 ## B2B Limitation
 
@@ -93,19 +96,20 @@ Custom events accept only an event name string. There is no support for event pr
 
 3. **Expecting event properties or user identity** — Custom events are name-only. You cannot attach properties, user IDs, or account context. Cabin tells you "button clicked happened 47 times today" but not "which users clicked" or "from which accounts."
 
-4. **Assuming server-side event tracking exists** — Event tracking is client-side only via the browser script. Cabin does offer a read-only analytics API (`api.withcabin.com/v1/`) for retrieving aggregated data (PRO accounts only), but there is no server-side event ingestion API, Node.js SDK, or backend tracking integration.
+4. **Assuming server-side event tracking exists** — Event tracking is client-side only via the browser script. Cabin does offer a read-only analytics API (`api.withcabin.com/v1/`) for retrieving aggregated data (Plus or Scale plans only), but there is no server-side event ingestion API, Node.js SDK, or backend tracking integration.
 
 5. **Subdomain mismatch** — If your app runs on `app.example.com` but you registered `example.com` in Cabin, page views may not be recorded. Verify the exact domain/subdomain configuration in your Cabin dashboard.
 
-6. **Event tracking requires PRO** — Custom events (both `cabin.event()` and `data-cabin-event` attributes) require a PRO account. On free plans, event calls will not record data.
+6. **Event tracking requires a paid plan** — Custom events (both `cabin.event()` and `data-cabin-event` attributes) require a Plus or Scale plan. On the Free plan, event calls will not record data.
 
 ## Debugging
 
 1. **Check script loading** — Open browser DevTools Network tab, filter for `scripts.withcabin.com`. Verify `hello.js` loads with a 200 status.
 2. **Check the global object** — In the browser console, type `cabin`. If the script loaded correctly, you should see the Cabin object with available methods.
-3. **Check outgoing beacons** — After page load, look for outgoing requests to Cabin's endpoint in the Network tab. A successful page view generates a tracking beacon.
+3. **Check outgoing beacons** — After page load, look for requests to `ping.withcabin.com` (`/hello` on page view, `/duration` on page hide, `/event` for custom events) in the Network tab.
 4. **Dashboard verification** — Log into your Cabin dashboard at https://withcabin.com. Page views should appear within a few minutes.
 5. **Custom event test** — Run `cabin.event('test-event')` in the browser console and verify it appears in the Cabin dashboard.
+6. **Blocking your own visits** — `cabin.blockMe(true)` in the console stores a localStorage flag that stops tracking in that browser; `cabin.blockMe(false)` re-enables it.
 
 ## Further Documentation
 
@@ -118,7 +122,8 @@ This reference covers the essentials for implementation. Consult:
 - **API:** https://docs.withcabin.com/api
 - **Bypass Ad-blockers:** https://docs.withcabin.com/bypass-ad-blockers
 - **Campaigns & UTMs:** https://docs.withcabin.com/campaigns-and-utms
-- **Public Dashboards:** https://docs.withcabin.com/public-dashboards
+- **Public Dashboards:** https://docs.withcabin.com/sharing#public-dashboards
+- **Plans and Limits:** https://docs.withcabin.com/plans
 - **GitHub (hello.js source):** https://github.com/withcabin/hello.js
 
-**Documentation note:** Cabin's public developer documentation is focused but covers installation, events, and the analytics API. The custom event API, SPA behavior, and domain-based site matching described here are verified against current documentation as of March 2026.
+**Documentation note:** Cabin's public developer documentation is focused but covers installation, events, and the analytics API. The custom event API, SPA behavior, and domain-based site matching described here are verified against current documentation and the live `hello.js` source as of October 2026.

@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against Plausible docs -->
+<!-- Last verified: 2026-10-01 against Plausible docs -->
 # Plausible Implementation Reference
 
 ## Overview
@@ -19,7 +19,7 @@ As of October 2025 (v3.1.0), Plausible provides a **per-site dynamic snippet**. 
 </script>
 ```
 
-The per-site snippet is obtained from Settings > Site Installation > "Review Installation" in the Plausible dashboard. Optional measurements (outbound links, file downloads, form submissions, etc.) are toggled in the dashboard and apply automatically -- no snippet changes needed.
+The per-site snippet is obtained from the Site Installation area of the General section in your site settings in the Plausible dashboard. Optional measurements (outbound links, file downloads, form submissions, etc.) are toggled in the dashboard and apply automatically -- no snippet changes needed.
 
 **`plausible.init()` overrides** can be passed to customize behavior per page:
 
@@ -32,6 +32,10 @@ plausible.init({
   endpoint: 'https://your-proxy.com/api/event'         // Custom proxy endpoint
 })
 ```
+
+Other documented `plausible.init()` options: `outboundLinks`, `formSubmissions`, `customProperties`, `logging`, `transformRequest`.
+
+> **Note:** The new per-site script does not support sending stats to multiple dashboards simultaneously. Keep the legacy script if you need that.
 
 **Forge-approved domain:** `*.plausible.io`
 
@@ -204,7 +208,9 @@ For server-side tracking, mobile apps, or non-browser environments:
 }
 ```
 
-**Response:** HTTP 202 Accepted with empty JSON body `{}`
+Optional `interactive` (boolean, default `true`) controls whether the event affects bounce rate.
+
+**Response:** HTTP 202 Accepted with empty JSON body `{}` -- returned even when the event is dropped. An `x-plausible-dropped: 1` response header indicates the event was rejected (e.g., bot filtering).
 
 ## Limits
 
@@ -216,8 +222,8 @@ For server-side tracking, mobile apps, or non-browser environments:
 | URL length (excluding domain & query) | 2,000 characters |
 | Goals per site | Unlimited (but each must be manually created) |
 | Stats API rate limit | 600 requests per hour per API key |
-| Data retention (cloud) | Unlimited |
-| Sites per account (cloud) | 50 on Growth plan, unlimited on Business |
+| Data retention (cloud) | 3 years (Starter/Growth), 5 years (Business), 5+ years (Enterprise) |
+| Sites per account (cloud) | 1 (Starter), up to 3 (Growth), up to 10 (Business), 10+ (Enterprise) |
 
 ## B2B Limitation
 
@@ -275,4 +281,4 @@ This reference covers the essentials for implementation. For advanced topics, co
 - **Stats API (v2):** https://plausible.io/docs/stats-api
 - **Stats API v1 (Legacy):** https://plausible.io/docs/stats-api-v1
 - **Proxy Setup (Ad Blocker Bypass):** https://plausible.io/docs/proxy/introduction
-- **Self-Hosting (Community Edition):** https://plausible.io/docs/self-hosting
+- **Self-Hosting (Community Edition):** https://plausible.io/self-hosted-web-analytics (install guide: https://github.com/plausible/community-edition)

@@ -65,7 +65,7 @@ Generated from tracking-plan.yaml v[version] on [date].
 [SDK-specific call signature]
 
 **SDK Constraints:**
-[e.g., Accoil: no properties — encode in event names]
+[e.g., Accoil: no properties stored — track the action once, no variants in event names; no group context on track calls]
 
 **Template Code:**
 [1-2 representative examples showing the call pattern]

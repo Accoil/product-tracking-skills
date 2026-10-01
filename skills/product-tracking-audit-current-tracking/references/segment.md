@@ -1,3 +1,4 @@
+<!-- Last verified: 2026-10-01 against Segment docs (@segment/analytics-next v1.84.x, @segment/analytics-node v3.1.x) -->
 # Segment Implementation Guide
 
 ## Overview
@@ -139,13 +140,8 @@ B2B analytics tools need group context. Without it, you lose account-level insig
 Put PII in user traits (identify), not event properties. Event properties should be IDs and metadata.
 
 ### 5. Not Flushing on Exit
-Browser SDK batches calls. On page unload, flush pending events:
-
-```typescript
-window.addEventListener('beforeunload', () => {
-  analytics.flush();
-});
-```
+With batching enabled, Analytics.js itself attempts to flush the queue on `beforeunload` using `fetch` with `keepalive` (64 KB limit) — delivery isn't guaranteed, so large batch sizes can lose exit events. If you find manual `analytics.flush()` calls in a codebase, note them; a public `flush()` method is not documented for Analytics.js.
+<!-- UNVERIFIED: analytics.flush() on the browser SDK — not in Analytics.js docs as of 2026-10-01 -->
 
 ## Debugging
 
@@ -154,7 +150,7 @@ window.addEventListener('beforeunload', () => {
 analytics.debug(true);
 ```
 
-### Use the Segment Debugger
+### Use the Segment Inspector
 Chrome extension shows events in real-time.
 
 ### Check the Source Debugger

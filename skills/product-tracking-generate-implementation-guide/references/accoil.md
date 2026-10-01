@@ -1,4 +1,4 @@
-<!-- Last verified: 2026-03-10 against developer.accoil.com -->
+<!-- Last verified: 2026-10-01 against developer.accoil.com (Ingress API v2) -->
 # Accoil Implementation Guide
 
 ## Overview
@@ -74,7 +74,7 @@ accoil.group("acc_456", {
 accoil.track("Report_Created");
 ```
 
-**Important:** Accoil track calls accept **only the event name**. No event properties are stored. Encode meaningful distinctions in the event name itself.
+**Important:** Accoil track calls accept **only the event name**. No event properties are stored. Do not encode variants or property values in the event name.
 
 ### Audit patterns for tracker.js
 
@@ -199,9 +199,11 @@ function trackEvent(userId: string, event: string) {
 
 If already using Segment, add Accoil as a destination. All `identify`, `group`, and `track` calls flow through automatically.
 
-1. In Segment: Destinations > Add Destination > Accoil
-2. Enter your Accoil API key
-3. Map group ID to Accoil's account identifier
+1. In Segment: Connections > Catalog, search for **Accoil Analytics**, click Add Destination
+2. Choose the Segment source to connect
+3. Enter your Accoil API key and enable the destination
+
+Segment `page` and `screen` calls are sent to Accoil as track events. Allow 8–24 hours for data to begin appearing in Accoil.
 
 ```typescript
 // Segment calls that Accoil receives
@@ -214,11 +216,12 @@ Note: Segment passes properties, but Accoil only stores the event name from trac
 
 ---
 
-## Group Context on Track Calls (Hierarchical Groups)
+## Hierarchical Groups
 
 **EARLY ACCESS: Group Context/Hierarchy is in early access**
+<!-- UNVERIFIED: the "early access" status is not mentioned on developer.accoil.com/docs/concepts/group-hierarchy as of 2026-10-01 — confirm with Accoil whether it is now GA -->
 
-Accoil has full support for hierarchical group structures. When your product has multiple group levels (account > workspace > project), every track call must include a `context.groupId` to attribute the event to the correct group.
+Accoil has full support for hierarchical group structures. When your product has multiple group levels (account > workspace > project), define each level with `group()` and link them with `parent_group_id`. Track calls stay name-only — no group context on the event.
 
 ### Every Group Level Needs a group() Call
 
@@ -278,62 +281,15 @@ POST /v2/group
 }
 ```
 
-### Attributing Track Calls to a Specific Group
+### Track Calls and Group Attribution
 
-Include `context.groupId` on every track call to tell Accoil which group the event belongs to. Accoil uses this plus the `parent_group_id` relationships to roll metrics up the hierarchy automatically.
+Track calls carry only `userId` and the event name — do **not** send `context.groupId` or any other group context on track calls. Accoil attributes events to groups through the user's membership, established by `identify()` (with `groupId`) and `group()` calls. Hierarchy rollup comes from the `parent_group_id` traits on your `group()` calls.
 
-**tracker.js (Browser):**
 ```javascript
-// Project-level event — rolls up to workspace and account
-accoil.track("Task_Completed", {
-  context: { groupId: "proj_123" }
-});
-
-// Workspace-level event — rolls up to account only
-accoil.track("Workspace_Settings_Updated", {
-  context: { groupId: "ws_789" }
-});
-
-// Account-level event — no rollup needed
-accoil.track("Plan_Upgraded", {
-  context: { groupId: "acc_456" }
-});
+accoil.track("Task_Completed");
 ```
 
-**Direct API (v2):**
-```json
-POST /v2/track
-{
-  "userId": "usr_123",
-  "event": "Task_Completed",
-  "context": {
-    "groupId": "proj_123"
-  }
-}
-```
-
-**Via Segment:**
-```javascript
-analytics.track('Task_Completed', {}, {
-  context: { groupId: 'proj_123' }
-});
-```
-
-### How Rollups Work
-
-When Accoil receives a track call with `context.groupId`:
-1. The event is attributed to the specified group (e.g., `proj_123`)
-2. Accoil follows the `parent_group_id` chain upward
-3. The event contributes to engagement scores at every level in the hierarchy
-
-**Example:** A `Task_Completed` event with `groupId: "proj_123"` contributes to:
-- Project `proj_123` metrics
-- Workspace `ws_789` metrics (parent)
-- Account `acc_456` metrics (grandparent)
-
-### Without context.groupId
-
-If a track call does not include `context.groupId`, Accoil attributes the event to the user's most recently associated group from the last `group()` call. This is unreliable in multi-group products where users switch between workspaces or projects. **Always include context.groupId explicitly.**
+**Fix the membership, not the event.** If events are landing on the wrong group, make sure the user is associated with the right groups via `group()` when they join or switch workspaces/projects.
 
 ---
 
@@ -344,9 +300,9 @@ Accoil stores **event names only** — not properties. This affects how you desi
 | Other SDKs | Accoil |
 |-----------|--------|
 | `track("report.created", { type: "standard" })` | `track("Report_Created")` |
-| `track("report.created", { type: "template" })` | `track("Template_Report_Created")` |
+| `track("report.exported", { format: "pdf" })` | `track("Report_Exported")` |
 
-If you need to distinguish variants in Accoil, encode the distinction in the event name. For other downstream tools (Amplitude, Mixpanel), you can still send properties — Accoil will simply ignore them.
+**Do not put variants in event names.** No dynamic values or property values in names — `Report_Exported`, not `Report_Exported_PDF`. Encoding variants creates event sprawl and fragments engagement scoring. Track the action once; put descriptive context on user/account traits via `identify()`/`group()`, and send properties to other downstream tools (Amplitude, Mixpanel) — Accoil simply ignores them.
 
 ## Critical: Group Calls Are Essential
 
@@ -385,7 +341,7 @@ Most common issue. Accoil needs account context for scoring.
 
 ### 2. Expecting Event Properties
 Accoil ignores event properties. Only the event name is stored.
-**Fix:** Encode meaningful distinctions in the event name.
+**Fix:** Track the action once without variants in the name; put context on user/account traits.
 
 ### 3. Silent Auth Failures
 The API returns 202 even with invalid API keys — it validates async.
@@ -406,6 +362,7 @@ Emails change (e.g., name changes, domain migrations). Using email as `userId` c
 ## Debugging
 
 - **Accoil Dashboard:** Live events appear in the debug console within seconds.
+  <!-- UNVERIFIED: debug console latency not documented on developer.accoil.com; the Segment integration page says to allow 8-24 hours for data to begin appearing -->
 - **Segment Event Delivery:** If using Segment, check the delivery tab for Accoil destination.
 - **Test Account:** Create a test account with known events, verify in Accoil's account view.
 
@@ -414,13 +371,15 @@ Emails change (e.g., name changes, domain migrations). Using email as `userId` c
 This reference covers the essentials for product tracking implementation. For advanced topics and support, consult Accoil's official resources:
 
 - **Developer Docs:** https://developer.accoil.com/
-- **JavaScript SDK:** https://developer.accoil.com/docs/js-tracking
-- **REST API (Getting Started):** https://developer.accoil.com/docs/getting-started
-- **Identify Call:** https://developer.accoil.com/docs/identify-call
-- **Group Call:** https://developer.accoil.com/docs/group-call
-- **Track Call:** https://developer.accoil.com/docs/track-call
-- **Call Types:** https://developer.accoil.com/docs/call-types
+- **JavaScript SDK:** https://developer.accoil.com/docs/integrations/javascript-sdk
+- **REST API (Quick Start):** https://developer.accoil.com/docs/quick-start/rest-api
+- **REST API (Integration Guide):** https://developer.accoil.com/docs/integrations/rest-api
+- **Identify Call:** https://developer.accoil.com/docs/concepts/identify-call
+- **Group Call:** https://developer.accoil.com/docs/concepts/group-call
+- **Track Call:** https://developer.accoil.com/docs/concepts/track-call
+- **How Accoil Works (Call Types):** https://developer.accoil.com/docs/concepts/how-accoil-works
 - **Group Hierarchy:** https://developer.accoil.com/docs/concepts/group-hierarchy
+- **Snapshot Metrics:** https://developer.accoil.com/docs/concepts/snapshot-metrics
 - **Ingress API:** https://developer.accoil.com/docs/ingress-api
 - **Segment Integration:** https://developer.accoil.com/docs/integrations/segment
 - **RudderStack Integration:** https://developer.accoil.com/docs/integrations/rudderstack

@@ -144,25 +144,30 @@ analytics.group('proj_123', {
 
 ## Track Calls Need Group Context
 
-Every `track()` call should include the group ID for the level where the event occurred. This is how analytics tools attribute the event to the correct group.
+Every event should be attributed to the group for the level where it occurred. How depends on the destination: some take group context on the track call (below); CDPs (Segment/RudderStack) only associate users with groups via `group()`, so per-event groups go through the destination's own mechanism.
 
 ### The Pattern
 
 ```javascript
-// Segment / Accoil: use context.groupId
+// Segment/RudderStack: group() associates the user; per-event groups use the
+// destination's mechanism, e.g. Amplitude via integrations options
 analytics.track('task.completed', { task_id: 'task_456' }, {
-  context: { groupId: 'proj_123' }
+  integrations: { Amplitude: { groups: { project: 'proj_123' } } }
 });
+
+// Accoil: no group context on track calls — events are attributed via
+// user membership (identify with groupId / group() calls)
+accoil.track('Task_Completed');
 
 // Amplitude: use groups option
 amplitude.track('task.completed', { task_id: 'task_456' }, {
   groups: { project: 'proj_123' }
 });
 
-// Mixpanel: use $groups property
+// Mixpanel: send the group key as an event property
 mixpanel.track('task.completed', {
   task_id: 'task_456',
-  $groups: { project: 'proj_123' }
+  project_id: 'proj_123'  // group key configured in Mixpanel
 });
 
 // PostHog: use groups option (Node.js) or $groups property (browser)
@@ -183,6 +188,8 @@ The tracking plan assigns each event to a `group_level`. The implementation must
 | `task.completed` | project | `proj_123` |
 | `workspace.settings_updated` | workspace | `ws_789` |
 | `plan.upgraded` | account | `acc_456` |
+
+**Accoil exception:** Accoil track calls carry only `userId` and the event name. Carry `group_level` through by making sure the user is associated with that group via `group()` (with `parent_group_id` for hierarchy rollup), not by adding group context to the event.
 
 ## Multi-Account Users
 
@@ -213,14 +220,7 @@ Include on every track call:
 
 Most CDPs/SDKs support account context:
 
-**Segment:**
-```javascript
-analytics.track('report.created', {
-  report_id: 'rpt_123'
-}, {
-  context: { groupId: 'acc_456' }
-});
-```
+**Segment:** `analytics.group('acc_456', {...})` associates the user with the account. Don't rely on `context: { groupId }` on track calls — it only has an effect in destinations mapped to read it. For per-event attribution, use the destination's mechanism (see above).
 
 **Amplitude:**
 ```javascript

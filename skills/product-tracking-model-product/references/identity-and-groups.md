@@ -155,13 +155,10 @@ Each event should be attributed to the **most specific group** where it occurred
 
 **Accoil (recommended):**
 ```javascript
-track("Task Completed", {
-  task_id: "task_456"
-}, {
-  context: {
-    groupId: "proj_123"  // Capital I in groupId
-  }
-});
+// No group context on Accoil track calls — event name only.
+// Accoil attributes the event via the user's membership (identify with
+// groupId / group() calls) and rolls up via parent_group_id.
+track("Task_Completed");
 ```
 
 **Amplitude:**
@@ -203,14 +200,7 @@ posthog.capture({
 });
 ```
 
-**Segment:**
-```javascript
-analytics.track("Task Completed", {
-  task_id: "task_456"
-}, {
-  context: { groupId: "proj_123" }
-});
-```
+**Segment / RudderStack:** no generic per-event group field — `group()` associates the user with the group. Where a destination supports per-event groups, use its documented mechanism (e.g. Segment → Amplitude: `integrations: { Amplitude: { groups: { project: "proj_123" } } }`). In an audit, `context.groupId` on track calls has no effect unless a connected destination documents reading it (e.g. Segment's Mixpanel (Actions) Track Group ID mapping).
 
 ### Every Group Level Needs Its Own group() Call
 
