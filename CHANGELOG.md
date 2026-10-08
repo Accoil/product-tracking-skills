@@ -2,6 +2,14 @@
 
 All notable changes to Product Tracking Skills. Releases: https://github.com/Accoil/product-tracking-skills/releases
 
+## v1.2.3 — 2026-10-09
+
+Security fixes in the example code, prompted by OpenAI's plugin skill scan.
+
+- **No API key in debug logs.** The generic dispatcher example in `implementation-architecture.md` (implement and audit skills) logged the request body, which included the API key. Debug mode now logs only the event name; how the key is sent is unchanged.
+- **No PII in debug logs.** Debug examples log event names and property keys, not payload values (including the Forge example).
+- **Verification is for the user to run.** `implement-tracking` now puts its verification checklist in `tracking/README.md` and doesn't run tracking calls, send events or use API keys itself.
+
 ## v1.2.2 — 2026-10-08
 
 OpenAI plugin directory submission prep.

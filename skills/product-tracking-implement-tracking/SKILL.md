@@ -228,7 +228,7 @@ Before considering implementation complete:
 
 ## Verification
 
-Before considering implementation complete, verify the integration works:
+Include these verification steps in `tracking/README.md` for the user to run. Do not run tracking calls, send events, or use API keys yourself.
 
 - [ ] **Dry run:** Execute at least one track, identify, and group call in development
 - [ ] **Delivery confirmation:** Check the analytics destination's debug console or logs for received events
