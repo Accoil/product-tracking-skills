@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "product-tracking",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Skills that make SaaS products data-ready for product analytics: model the product, audit existing tracking, design a tracking plan, generate an SDK-specific implementation guide, implement typed tracking code, and keep the plan current as features ship.",
   "author": {
     "name": "Accoil",
@@ -51,7 +51,7 @@
       },
       "onboardingSkill": "./skills/product-tracking-model-product/SKILL.md",
       "publication": {
-        "release_notes": "Initial OpenAI directory release of the Accoil product tracking skills (v1.2.1): model product, audit current tracking, design tracking plan, implementation guides for 25 analytics destinations, implement tracking, instrument new feature, and business case."
+        "release_notes": "Initial OpenAI directory release of the Accoil product tracking skills (v1.2.2): model product, audit current tracking, design tracking plan, implementation guides for 25 analytics destinations, implement tracking, instrument new feature, and business case."
       }
     }
   }

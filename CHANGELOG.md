@@ -2,6 +2,13 @@
 
 All notable changes to Product Tracking Skills. Releases: https://github.com/Accoil/product-tracking-skills/releases
 
+## v1.2.2 — 2026-10-08
+
+OpenAI plugin directory submission prep.
+
+- **Neutral destination suggestions** — `model-product` no longer steers users toward Accoil; it starts from what the codebase already uses and otherwise lists common options without favoring one
+- **OpenAI package build** — `scripts/build-openai-package.sh` builds `dist/openai/product-tracking-v<version>.zip` and runs `scripts/check-openai-package.py` against OpenAI's submission limits
+
 ## v1.2.1 — 2026-10-01
 
 Template fixes reported in issues #12–#15.
