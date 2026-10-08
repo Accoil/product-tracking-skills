@@ -1,6 +1,6 @@
 {
   "name": "product-tracking-skills",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "AI agent skills that make SaaS products data-ready for product analytics — from codebase scan to tracking plan to working instrumentation code.",
   "author": {
     "name": "Accoil",
