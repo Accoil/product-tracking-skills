@@ -81,9 +81,9 @@ const dispatch = async (eventType, payload) => {
     timestamp: Date.now(),
   });
 
-  // Debug mode: log instead of send
+  // Debug mode: log the event name instead of sending. Never log the API key or user traits.
   if (process.env.ANALYTICS_DEBUG === 'true') {
-    console.log(`[Analytics Debug] ${eventType}:`, body);
+    console.log(`[Analytics Debug] ${eventType}`);
     return;
   }
 
@@ -226,12 +226,13 @@ export const trackEvent = async ({ payload, context }) => {
 
 ## Debug Mode
 
-Essential for development. Log instead of send:
+Essential for development. Log instead of send, but keep secrets and PII out of logs:
 
 ```javascript
 const dispatch = async (eventType, payload) => {
   if (process.env.ANALYTICS_DEBUG === 'true') {
-    console.log(`[Analytics Debug] ${eventType}:`, JSON.stringify(payload, null, 2));
+    // Log event names and property keys only, never values that may contain PII.
+    console.log(`[Analytics Debug] ${eventType}:`, Object.keys(payload));
     return;
   }
   

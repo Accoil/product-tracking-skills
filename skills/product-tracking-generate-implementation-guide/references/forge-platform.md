@@ -361,7 +361,7 @@ const dispatch = async (path, payload) => {
     });
 
     if (process.env.ANALYTICS_DEBUG?.toLowerCase() === 'true') {
-        console.log(`[Analytics Debug] ${url}:\n${body}`);
+        console.log(`[Analytics Debug] ${path}`); // never log the API key or user traits
         return;
     }
 
