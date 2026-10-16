@@ -1,14 +1,21 @@
 {
   "name": "product-tracking-skills",
-  "version": "1.2.3",
+  "displayName": "Product Tracking Skills",
+  "version": "1.2.4",
   "description": "AI agent skills that make SaaS products data-ready for product analytics — from codebase scan to tracking plan to working instrumentation code.",
   "author": {
     "name": "Accoil",
-    "email": "hello@accoil.com"
+    "email": "hello@accoil.com",
+    "url": "https://www.accoil.com"
   },
-  "homepage": "https://github.com/accoil/product-tracking-skills",
-  "repository": "https://github.com/accoil/product-tracking-skills",
+  "homepage": "https://github.com/Accoil/product-tracking-skills",
+  "repository": "https://github.com/Accoil/product-tracking-skills",
   "license": "MIT",
+  "icon": "./assets/icon.png",
+  "documentationUrl": "https://github.com/Accoil/product-tracking-skills#readme",
+  "supportUrl": "https://github.com/Accoil/product-tracking-skills/issues",
+  "privacyPolicyUrl": "https://www.accoil.com/privacy",
+  "termsOfServiceUrl": "https://www.accoil.com/terms",
   "keywords": [
     "product-tracking",
     "tracking-plan",
