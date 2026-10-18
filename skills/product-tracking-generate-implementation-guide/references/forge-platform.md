@@ -353,7 +353,7 @@ export const handleGroup = async (groupId, traits) => {
 };
 
 const dispatch = async (path, payload) => {
-    const apiKey = process.env.ANALYTICS_API_KEY;
+    const apiKey = process.env.ACCOIL_API_KEY; // Accoil key, sent only to Accoil. For another destination, use its own key and endpoint.
     const url = `https://in.accoil.com${path}`;
     const body = JSON.stringify({
         ...payload,
@@ -448,14 +448,14 @@ Numeric snapshot values should be converted to strings for consistent data types
 Set via Forge CLI:
 
 ```bash
-# Required: API key for analytics provider
-forge variables set ANALYTICS_API_KEY your_key_here
+# Required: API key for the analytics destination (Accoil in the dispatcher example)
+forge variables set ACCOIL_API_KEY your_key_here
 
 # Optional: debug mode (logs instead of sending)
 forge variables set ANALYTICS_DEBUG true
 
 # Per-environment configuration
-forge variables set --environment production ANALYTICS_API_KEY your_prod_key
+forge variables set --environment production ACCOIL_API_KEY your_prod_key
 forge variables set --environment development ANALYTICS_DEBUG true
 ```
 
