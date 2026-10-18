@@ -66,6 +66,12 @@ The focus is **users, accounts, features, and lifecycle events**. The raw signal
 
 The boundary is deliberate. This produces instrumentation. What happens downstream — scoring, dashboards, alerts — belongs to tools like [Amplitude](https://amplitude.com), [PostHog](https://posthog.com), [Mixpanel](https://mixpanel.com), or [Accoil](https://accoil.com).
 
+### Data and Credentials
+
+The skills read and write files in your repository, and nothing else. They don't run your tracking code, send events, call analytics APIs or read API keys, and they send nothing to Accoil or any other service.
+
+The destination references in `skills/*/references/` contain example code for **your application**. Each example reads that destination's own key from your app's environment (for example `process.env.SEGMENT_WRITE_KEY`) and sends events only to that destination's API. The generic HTTP example sends to the endpoint you configure in `ANALYTICS_ENDPOINT`. Keep these keys in your app's secrets management, never in source code.
+
 ---
 
 ## What's Inside

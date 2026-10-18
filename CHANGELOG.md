@@ -2,6 +2,13 @@
 
 All notable changes to Product Tracking Skills. Releases: https://github.com/Accoil/product-tracking-skills/releases
 
+## v1.2.5 — 2026-10-19
+
+Clarifies credential handling for the Claude plugin directory's security scan.
+
+- **README: Data and Credentials.** States that the skills only read and write repository files, and never run tracking code, send events or read API keys. The destination references are example code for your application, where each destination's key goes only to that destination.
+- **Forge example names its key for its host.** The Forge dispatcher sends to Accoil, so it now reads `ACCOIL_API_KEY` instead of the generic `ANALYTICS_API_KEY`.
+
 ## v1.2.4 — 2026-10-16
 
 Claude plugin directory listing details.
