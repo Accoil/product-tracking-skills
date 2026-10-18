@@ -2,6 +2,13 @@
 
 All notable changes to Product Tracking Skills. Releases: https://github.com/Accoil/product-tracking-skills/releases
 
+## v1.2.4 — 2026-10-16
+
+Claude plugin directory listing details.
+
+- **Listing links in the Claude manifest.** `.claude-plugin/plugin.json` now sets `displayName`, `icon`, `documentationUrl`, `supportUrl` (GitHub issues), `privacyPolicyUrl` and `termsOfServiceUrl`, which the Claude plugin directory reads for the listing, plus an author URL.
+- **Homepage points to GitHub.** The marketplace entry's `homepage` now matches the plugin manifest: the GitHub repository.
+
 ## v1.2.3 — 2026-10-09
 
 Security fixes in the example code, prompted by OpenAI's plugin skill scan.
