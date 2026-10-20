@@ -45,7 +45,7 @@ Then embed the returned snippet in your HTML. Journy recommends using the snippe
 ```typescript
 import { Client } from '@journyio/sdk';
 
-const client = Client.withDefaults(process.env.JOURNY_API_KEY!);
+const client = Client.withDefaults(config.journyApiKey); // config: your app's settings object; load keys from its secrets store, never hard-code them
 ```
 
 For custom HTTP client implementations:
@@ -54,7 +54,7 @@ For custom HTTP client implementations:
 import { Client } from '@journyio/sdk';
 
 const http = new CustomHttpClient();
-const client = new Client(http, { apiKey: process.env.JOURNY_API_KEY! });
+const client = new Client(http, { apiKey: config.journyApiKey });
 ```
 
 ### HTTP API

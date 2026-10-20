@@ -353,14 +353,14 @@ export const handleGroup = async (groupId, traits) => {
 };
 
 const dispatch = async (path, payload) => {
-    const apiKey = process.env.ACCOIL_API_KEY; // Accoil key, sent only to Accoil. For another destination, use its own key and endpoint.
+    const apiKey = config.accoilApiKey; // Accoil key, sent only to Accoil. For another destination, use its own key and endpoint.
     const url = `https://in.accoil.com${path}`;
     const body = JSON.stringify({
         ...payload,
         timestamp: new Date().toISOString(),
     });
 
-    if (process.env.ANALYTICS_DEBUG?.toLowerCase() === 'true') {
+    if (config.analyticsDebug) {
         console.log(`[Analytics Debug] ${path}`); // never log the API key or user traits
         return;
     }
@@ -458,6 +458,8 @@ forge variables set ANALYTICS_DEBUG true
 forge variables set --environment production ACCOIL_API_KEY your_prod_key
 forge variables set --environment development ANALYTICS_DEBUG true
 ```
+
+The dispatcher's `config.accoilApiKey` is the `ACCOIL_API_KEY` Forge variable. Read it once in your app's config module and pass it in, rather than reading variables throughout the analytics code.
 
 ## Differences from Standard SDK Implementation
 

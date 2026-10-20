@@ -166,7 +166,7 @@ Required: `userId`, `event`. **No properties accepted** — only the event name 
 ### Server-side example (Node.js)
 
 ```typescript
-const ACCOIL_API_KEY = process.env.ACCOIL_API_KEY!;
+const ACCOIL_API_KEY = config.accoilApiKey; // config: your app's settings object; load keys from its secrets store, never hard-code them
 const ACCOIL_BASE = 'https://in.accoil.com';
 
 async function accoilPost(path: string, body: object) {

@@ -90,7 +90,7 @@ export function mintIntercomJwt(): string {
         created_at: 1685577600,
       },
     },
-    process.env.INTERCOM_MESSENGER_SECRET!,
+    config.intercomMessengerSecret, // config: your app's settings object; load keys from its secrets store, never hard-code them
     { algorithm: 'HS256', expiresIn: '10m' },
   );
 }
@@ -106,7 +106,7 @@ Call `Intercom('shutdown')` on logout. This clears the session cookie, and a new
 import { IntercomClient } from 'intercom-client';
 
 const client = new IntercomClient({
-  token: process.env.INTERCOM_ACCESS_TOKEN!,
+  token: config.intercomAccessToken,
 });
 ```
 
@@ -249,7 +249,7 @@ jwt.sign(
       created_at: 1685577600,
     },
   },
-  process.env.INTERCOM_MESSENGER_SECRET!,
+  config.intercomMessengerSecret,
   { algorithm: 'HS256', expiresIn: '10m' },
 );
 ```

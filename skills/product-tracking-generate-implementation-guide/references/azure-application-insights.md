@@ -26,7 +26,7 @@ import { ApplicationInsights } from '@microsoft/applicationinsights-web';
 
 const appInsights = new ApplicationInsights({
   config: {
-    connectionString: process.env.APPLICATIONINSIGHTS_CONNECTION_STRING,
+    connectionString: config.appInsightsConnectionString, // config: your app's settings object; load keys from its secrets store, never hard-code them
     // instrumentationKey is deprecated -- support for ikey-based ingestion
     // ended March 31, 2025. Always use connectionString instead.
 
@@ -57,7 +57,7 @@ appInsights.trackPageView(); // Manually track the initial page view
 ```javascript
 const appInsights = require('applicationinsights');
 
-appInsights.setup(process.env.APPLICATIONINSIGHTS_CONNECTION_STRING)
+appInsights.setup(config.appInsightsConnectionString)
   .setAutoCollectRequests(true)
   .setAutoCollectPerformance(true, true) // (enabled, enableExtendedMetrics) -- note: extended metrics not supported in SDK 3.x
   .setAutoCollectExceptions(true)
@@ -76,7 +76,7 @@ Or with ES modules:
 ```typescript
 import * as appInsights from 'applicationinsights';
 
-appInsights.setup(process.env.APPLICATIONINSIGHTS_CONNECTION_STRING).start();
+appInsights.setup(config.appInsightsConnectionString).start();
 const client = appInsights.defaultClient;
 ```
 
@@ -87,7 +87,7 @@ const client = appInsights.defaultClient;
 import { useAzureMonitor } from '@azure/monitor-opentelemetry';
 useAzureMonitor({
   azureMonitorExporterOptions: {
-    connectionString: process.env.APPLICATIONINSIGHTS_CONNECTION_STRING,
+    connectionString: config.appInsightsConnectionString,
   },
 });
 ```

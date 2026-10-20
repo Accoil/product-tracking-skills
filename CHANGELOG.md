@@ -2,6 +2,14 @@
 
 All notable changes to Product Tracking Skills. Releases: https://github.com/Accoil/product-tracking-skills/releases
 
+## v1.2.6 — 2026-10-20
+
+Clears the Claude plugin directory's credential hold.
+
+- **Examples take keys from `config`, not the environment.** Every destination reference now passes its key as a value from your app's config (for example `config.segmentWriteKey`) instead of reading `process.env` inline. The directory's scan flags any environment credential read, even in example code. Generated code works the same way: your app's config module loads keys from its secrets store.
+- **Debug and instance-level flags** in the dispatcher examples read from `config` too.
+- **README** example updated to match.
+
 ## v1.2.5 — 2026-10-19
 
 Clarifies credential handling for the Claude plugin directory's security scan.

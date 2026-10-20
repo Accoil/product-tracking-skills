@@ -70,7 +70,7 @@ The boundary is deliberate. This produces instrumentation. What happens downstre
 
 The skills read and write files in your repository, and nothing else. They don't run your tracking code, send events, call analytics APIs or read API keys, and they send nothing to Accoil or any other service.
 
-The destination references in `skills/*/references/` contain example code for **your application**. Each example reads that destination's own key from your app's environment (for example `process.env.SEGMENT_WRITE_KEY`) and sends events only to that destination's API. The generic HTTP example sends to the endpoint you configure in `ANALYTICS_ENDPOINT`. Keep these keys in your app's secrets management, never in source code.
+The destination references in `skills/*/references/` contain example code for **your application**. Each example takes that destination's own key from your app's config (for example `config.segmentWriteKey`) and sends events only to that destination's API. The generic HTTP example sends to the endpoint you configure. Keep these keys in your app's secrets management, never in source code.
 
 ---
 
