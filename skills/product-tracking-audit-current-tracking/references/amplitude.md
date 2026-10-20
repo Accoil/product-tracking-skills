@@ -30,7 +30,7 @@ import * as amplitude from '@amplitude/analytics-browser';
 
 // Note: `defaultTracking` was deprecated in Browser SDK v2.10.0; use `autocapture` instead.
 // When auditing, `defaultTracking` in a codebase indicates an older SDK setup.
-amplitude.init(process.env.AMPLITUDE_API_KEY!, {
+amplitude.init(config.amplitudeApiKey, {
   autocapture: {
     sessions: true,        // Track session start/end
     pageViews: true,       // Track page views automatically
@@ -175,7 +175,7 @@ Track billing events server-side for accuracy:
 // Server-side
 import { init, track } from '@amplitude/analytics-node';
 
-init(process.env.AMPLITUDE_API_KEY!);
+init(config.amplitudeApiKey); // config: your app's settings object; load keys from its secrets store, never hard-code them
 
 track('plan.upgraded', {
   from_plan: 'free',

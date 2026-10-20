@@ -487,7 +487,7 @@ accoil.track("Report_Exported");
 REST API at `https://in.accoil.com`, authenticated with `Authorization: Basic YOUR_API_KEY`. Returns 202 and processes asynchronously — including key validation, so an invalid key still returns 202.
 
 ```typescript
-const ACCOIL_API_KEY = process.env.ACCOIL_API_KEY!;
+const ACCOIL_API_KEY = config.accoilApiKey; // config: your app's settings object; load keys from its secrets store, never hard-code them
 const ACCOIL_BASE = 'https://in.accoil.com';
 
 async function accoilPost(path: string, body: object) {

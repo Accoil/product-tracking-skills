@@ -131,9 +131,9 @@ No SDK. Use `fetch()` with the secret API token:
 const CS_API = 'https://api.customerscore.io';
 const headers = {
   'Content-Type': 'application/json',
-  'customerscore-key': process.env.CUSTOMERSCORE_API_KEY!,
+  'customerscore-key': config.customerscoreApiKey, // config: your app's settings object; load keys from its secrets store, never hard-code them
 };
-const TRACKER_KEY = process.env.CUSTOMERSCORE_TRACKER_KEY!; // e.g. 'CS-123456'
+const TRACKER_KEY = config.customerscoreTrackerKey; // e.g. 'CS-123456'
 ```
 
 ## Core Methods

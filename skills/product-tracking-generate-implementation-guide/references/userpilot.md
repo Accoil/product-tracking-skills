@@ -113,7 +113,7 @@ await fetch('https://analytex.userpilot.io/v1/identify', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': `Token ${process.env.USERPILOT_API_KEY}`,
+    'Authorization': `Token ${config.userpilotApiKey}`, // config: your app's settings object; load keys from its secrets store, never hard-code them
     'X-API-Version': '2020-09-22'
   },
   body: JSON.stringify({
@@ -217,7 +217,7 @@ await fetch('https://analytex.userpilot.io/v1/companies/identify', {
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json, text/plain, */*',
-    'Authorization': `Token ${process.env.USERPILOT_API_KEY}`
+    'Authorization': `Token ${config.userpilotApiKey}`
   },
   body: JSON.stringify({
     company_id: 'acc_456',
@@ -262,7 +262,7 @@ await fetch('https://analytex.userpilot.io/v1/track', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': `Token ${process.env.USERPILOT_API_KEY}`,
+    'Authorization': `Token ${config.userpilotApiKey}`,
     'X-API-Version': '2020-09-22'
   },
   body: JSON.stringify({
@@ -352,7 +352,7 @@ await fetch('https://analytex.userpilot.io/v1/users/bulk_identify', {
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json, text/plain, */*',
-    'Authorization': `Token ${process.env.USERPILOT_API_KEY}`
+    'Authorization': `Token ${config.userpilotApiKey}`
   },
   body: JSON.stringify({
     users: [
@@ -367,7 +367,7 @@ await fetch('https://analytex.userpilot.io/v1/companies/bulk_identify', {
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json, text/plain, */*',
-    'Authorization': `Token ${process.env.USERPILOT_API_KEY}`
+    'Authorization': `Token ${config.userpilotApiKey}`
   },
   body: JSON.stringify({
     companies: [

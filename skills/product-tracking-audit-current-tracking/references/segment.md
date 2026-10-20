@@ -113,7 +113,7 @@ Track billing and security events server-side:
 // Server-side Node.js
 import { Analytics } from '@segment/analytics-node';
 
-const analytics = new Analytics({ writeKey: process.env.SEGMENT_WRITE_KEY });
+const analytics = new Analytics({ writeKey: config.segmentWriteKey }); // config: your app's settings object; load keys from its secrets store, never hard-code them
 
 analytics.track({
   userId: 'usr_123',

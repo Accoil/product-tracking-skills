@@ -32,7 +32,7 @@ The Segment snippet goes in `<head>`. It loads asynchronously and won't block pa
 ```javascript
 import { Analytics } from '@segment/analytics-node';
 
-const analytics = new Analytics({ writeKey: process.env.SEGMENT_WRITE_KEY });
+const analytics = new Analytics({ writeKey: config.segmentWriteKey }); // config: your app's settings object; load keys from its secrets store, never hard-code them
 ```
 
 Server-side calls require explicit `userId` on every call — there is no implicit user context like the browser SDK maintains.
@@ -56,7 +56,7 @@ Since April 3, 2025, Segment enforces regional data routing. EU workspaces **MUS
 **Node.js EU configuration:**
 ```javascript
 const analytics = new Analytics({
-  writeKey: process.env.SEGMENT_WRITE_KEY,
+  writeKey: config.segmentWriteKey,
   host: 'https://events.eu1.segmentapis.com' // do not include /v1 for server SDKs
 });
 ```

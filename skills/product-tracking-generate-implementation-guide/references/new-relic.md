@@ -122,7 +122,7 @@ Configuration is done via `newrelic.js` (or `newrelic.cjs` for ESM apps) in your
 
 exports.config = {
   app_name: ['Your Application Name'],
-  license_key: process.env.NEW_RELIC_LICENSE_KEY,
+  license_key: config.newRelicLicenseKey, // config: your app's settings object; load keys from its secrets store, never hard-code them
   distributed_tracing: {
     enabled: true,
   },

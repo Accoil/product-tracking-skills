@@ -72,7 +72,7 @@ Handles communication with your analytics provider:
 // dispatcher.js
 
 const dispatch = async (eventType, payload) => {
-  const apiKey = process.env.ANALYTICS_API_KEY;
+  const apiKey = config.analyticsApiKey; // config: your app's settings object; load keys from its secrets store, never hard-code them
   const url = `https://in.accoil.com/v1/${eventType}`;
   
   const body = JSON.stringify({
@@ -82,7 +82,7 @@ const dispatch = async (eventType, payload) => {
   });
 
   // Debug mode: log the event name instead of sending. Never log the API key or user traits.
-  if (process.env.ANALYTICS_DEBUG === 'true') {
+  if (config.analyticsDebug) {
     console.log(`[Analytics Debug] ${eventType}`);
     return;
   }
@@ -116,7 +116,7 @@ Helper functions to extract IDs from your app's context:
 
 export const getUserId = (context) => {
   // Option: instance-level tracking for cost savings
-  if (process.env.ANALYTICS_INSTANCE_LEVEL === 'true') {
+  if (config.analyticsInstanceLevel) {
     return context.accountId;  // All users share account ID
   }
   return context.userId;
@@ -230,7 +230,7 @@ Essential for development. Log instead of send, but keep secrets and PII out of 
 
 ```javascript
 const dispatch = async (eventType, payload) => {
-  if (process.env.ANALYTICS_DEBUG === 'true') {
+  if (config.analyticsDebug) {
     // Log event names and property keys only, never values that may contain PII.
     console.log(`[Analytics Debug] ${eventType}:`, Object.keys(payload));
     return;
@@ -252,6 +252,8 @@ ANALYTICS_DEBUG=true
 ANALYTICS_API_KEY=prod_key
 # ANALYTICS_DEBUG not set or false
 ```
+
+Your app's config module loads these into the `config` object the dispatcher uses (`config.analyticsApiKey`, `config.analyticsDebug`, and so on). Keep keys in your secrets store, not in source.
 
 ---
 
